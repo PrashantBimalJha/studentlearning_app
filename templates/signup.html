@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Sign Up - Farming App{% endblock %}
+{% block title %}Sign Up - Student Learning Platform{% endblock %}
 
 {% block content %}
 <div class="signup-page">
     <div class="form-container">
-        <h2 class="form-title">🌱 Sign Up</h2>
+    <h2 class="form-title">� Sign Up</h2>
         
         <form action="/signup" method="POST" id="signupForm">
             <div class="form-group">
@@ -24,9 +24,9 @@
                 <label class="form-label" for="confirm_password">Confirm Password</label>
                 <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm your password" required>
             </div>
-            <button type="submit">Join Farming Community</button>
+            <button type="submit">Join Student Community</button>
         </form>
-        <p style="margin-top: 30px; color: #6c757d;">Already have an account? <a href="/login-page" style="color: #28a745; font-weight: bold;">Login</a></p>
+    <p style="margin-top: 30px; color: #6c757d;">Already have an account? <a href="/login-page" style="color: #0077cc; font-weight: bold;">Login</a></p>
     </div>
 </div>
 {% endblock %}

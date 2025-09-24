@@ -41,61 +41,54 @@ try:
     db_name = os.getenv('DB_NAME', 'farming')
     db = client[db_name]
     users_collection = db.users
-    market_updates_collection = db.market_updates
-    crops_collection = db.crops
+    announcements_collection = db.announcements
+    courses_collection = db.courses
+    assignments_collection = db.assignments
     log_success(f"Connected to MongoDB database: {db_name}")
 except Exception as e:
     log_error(f"Failed to connect to MongoDB: {e}")
     raise
 
 # Market Updates Database Functions
-def get_market_updates():
-    """Get all market updates from database"""
-    try:
-        updates = list(market_updates_collection.find().sort("created_at", -1))
-        for update in updates:
-            update['_id'] = str(update['_id'])
-        return updates
-    except Exception as e:
-        logger.error(f"Error getting market updates: {e}")
-        return []
+## REMOVED: get_market_updates (replaced by get_announcements)
 
-def add_market_update(update_data):
-    """Add a new market update to database"""
+def add_announcement(announcement_data):
+    """Add a new announcement to database"""
     try:
-        update_data['created_at'] = datetime.utcnow()
-        result = market_updates_collection.insert_one(update_data)
+        announcement_data['created_at'] = datetime.utcnow()
+        result = announcements_collection.insert_one(announcement_data)
         return str(result.inserted_id)
     except Exception as e:
-        logger.error(f"Error adding market update: {e}")
+        logger.error(f"Error adding announcement: {e}")
         return None
 
-def update_market_update(update_id, update_data):
-    """Update an existing market update"""
+def update_announcement(announcement_id, announcement_data):
+    """Update an existing announcement"""
     try:
         from bson import ObjectId
-        result = market_updates_collection.update_one(
-            {"_id": ObjectId(update_id)},
-            {"$set": update_data}
+        result = announcements_collection.update_one(
+            {"_id": ObjectId(announcement_id)},
+            {"$set": announcement_data}
         )
         return result.modified_count > 0
     except Exception as e:
-        logger.error(f"Error updating market update: {e}")
+        logger.error(f"Error updating announcement: {e}")
         return False
 
-def delete_market_update(update_id):
-    """Delete a market update"""
+def delete_announcement(announcement_id):
+    """Delete an announcement"""
     try:
         from bson import ObjectId
-        result = market_updates_collection.delete_one({"_id": ObjectId(update_id)})
+        result = announcements_collection.delete_one({"_id": ObjectId(announcement_id)})
         return result.deleted_count > 0
     except Exception as e:
-        logger.error(f"Error deleting market update: {e}")
+        logger.error(f"Error deleting announcement: {e}")
         return False
 
-# Crops Database Functions
-def get_crops(filters=None):
-    """Get all crops from database with optional filters"""
+
+# Courses Database Functions
+def get_courses(filters=None):
+    """Get all courses from database with optional filters"""
     try:
         query = {}
         if filters:
@@ -103,74 +96,60 @@ def get_crops(filters=None):
                 query['category'] = filters['category']
             if filters.get('location'):
                 query['location'] = {'$regex': filters['location'], '$options': 'i'}
-            if filters.get('price_min') or filters.get('price_max'):
-                price_query = {}
-                if filters.get('price_min'):
-                    price_query['$gte'] = filters['price_min']
-                if filters.get('price_max'):
-                    price_query['$lte'] = filters['price_max']
-                query['price_per_kg'] = price_query
-        
-        crops = list(crops_collection.find(query).sort("created_at", -1))
-        for crop in crops:
-            crop['_id'] = str(crop['_id'])
-            # Ensure all required fields exist with defaults
-            crop.setdefault('total_price', crop.get('quantity', 0) * crop.get('price_per_kg', 0))
-            crop.setdefault('seller_name', 'Unknown')
-            crop.setdefault('seller_phone', '')
-            crop.setdefault('description', '')
-        return crops
+        courses = list(courses_collection.find(query).sort("created_at", -1))
+        for course in courses:
+            course['_id'] = str(course['_id'])
+            course.setdefault('instructor', 'Unknown')
+            course.setdefault('description', '')
+        return courses
     except Exception as e:
-        logger.error(f"Error getting crops: {e}")
+        logger.error(f"Error getting courses: {e}")
         return []
 
-def add_crop(crop_data):
-    """Add a new crop listing to database"""
+def add_course(course_data):
+    """Add a new course to database"""
     try:
-        crop_data['created_at'] = datetime.utcnow()
-        result = crops_collection.insert_one(crop_data)
+        course_data['created_at'] = datetime.utcnow()
+        result = courses_collection.insert_one(course_data)
         return str(result.inserted_id)
     except Exception as e:
-        logger.error(f"Error adding crop: {e}")
+        logger.error(f"Error adding course: {e}")
         return None
 
-def update_crop(crop_id, crop_data):
-    """Update an existing crop listing"""
+def update_course(course_id, course_data):
+    """Update an existing course"""
     try:
         from bson import ObjectId
-        result = crops_collection.update_one(
-            {"_id": ObjectId(crop_id)},
-            {"$set": crop_data}
+        result = courses_collection.update_one(
+            {"_id": ObjectId(course_id)},
+            {"$set": course_data}
         )
         return result.modified_count > 0
     except Exception as e:
-        logger.error(f"Error updating crop: {e}")
+        logger.error(f"Error updating course: {e}")
         return False
 
-def delete_crop(crop_id):
-    """Delete a crop listing"""
+def delete_course(course_id):
+    """Delete a course"""
     try:
         from bson import ObjectId
-        result = crops_collection.delete_one({"_id": ObjectId(crop_id)})
+        result = courses_collection.delete_one({"_id": ObjectId(course_id)})
         return result.deleted_count > 0
     except Exception as e:
-        logger.error(f"Error deleting crop: {e}")
+        logger.error(f"Error deleting course: {e}")
         return False
 
-def get_user_crops(user_email):
-    """Get crops listed by a specific user"""
+def get_user_courses(user_email):
+    """Get courses created by a specific user"""
     try:
-        crops = list(crops_collection.find({"seller_email": user_email}).sort("created_at", -1))
-        for crop in crops:
-            crop['_id'] = str(crop['_id'])
-            # Ensure all required fields exist with defaults
-            crop.setdefault('total_price', crop.get('quantity', 0) * crop.get('price_per_kg', 0))
-            crop.setdefault('seller_name', 'Unknown')
-            crop.setdefault('seller_phone', '')
-            crop.setdefault('description', '')
-        return crops
+        courses = list(courses_collection.find({"instructor_email": user_email}).sort("created_at", -1))
+        for course in courses:
+            course['_id'] = str(course['_id'])
+            course.setdefault('instructor', 'Unknown')
+            course.setdefault('description', '')
+        return courses
     except Exception as e:
-        logger.error(f"Error getting user crops: {e}")
+        logger.error(f"Error getting user courses: {e}")
         return []
 
 def validate_email(email):
@@ -215,142 +194,8 @@ def styles():
         current_dir = os.path.dirname(os.path.abspath(__file__))
         css_path = os.path.join(current_dir, '..', 'webpage', 'styles.css')
         
-        with open(css_path, 'r') as f:
+        with open(css_path, 'r', encoding='utf-8') as f:
             css_content = f.read()
-        return css_content, 200, {'Content-Type': 'text/css'}
-    except FileNotFoundError:
-        logger.error(f"CSS file not found at: {css_path}")
-        return "CSS file not found.", 404
-
-@app.route('/favicon.ico')
-def favicon():
-    """Handle favicon requests"""
-    return '', 204  # No content response
-
-@app.route('/script.js')
-def script():
-    """Serve the JavaScript file"""
-    try:
-        # Get the correct path to the JavaScript file
-        import os
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        js_path = os.path.join(current_dir, '..', 'webpage', 'script.js')
-        
-        with open(js_path, 'r') as f:
-            js_content = f.read()
-        logger.info("Serving JavaScript file")
-        return js_content, 200, {'Content-Type': 'application/javascript'}
-    except FileNotFoundError:
-        logger.error(f"JavaScript file not found at: {js_path}")
-        return "JavaScript file not found.", 404
-
-@app.route('/static/js/<path:filename>')
-def static_js(filename):
-    """Serve static JavaScript files"""
-    try:
-        import os
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        js_path = os.path.join(current_dir, '..', 'static', 'js', filename)
-        
-        with open(js_path, 'r') as f:
-            js_content = f.read()
-        logger.info(f"Serving static JavaScript file: {filename}")
-        return js_content, 200, {'Content-Type': 'application/javascript'}
-    except FileNotFoundError:
-        logger.error(f"Static JavaScript file not found: {filename}")
-        return "JavaScript file not found.", 404
-
-
-@app.route('/login-page')
-def login_page():
-    """Serve the login page only"""
-    try:
-        logger.info("Serving login page")
-        return render_template('login.html')
-    except Exception as e:
-        logger.error(f"Error serving login page: {e}")
-        return "Error loading login page.", 500
-
-@app.route('/signup-page')
-def signup_page():
-    """Serve the signup page only"""
-    try:
-        logger.info("Serving signup page")
-        return render_template('signup.html')
-    except Exception as e:
-        logger.error(f"Error serving signup page: {e}")
-        return "Error loading signup page.", 500
-
-@app.route('/about')
-def about_page():
-    """Serve the about us page"""
-    try:
-        logger.info("Serving about page")
-        return render_template('about.html')
-    except Exception as e:
-        logger.error(f"Error serving about page: {e}")
-        return "Error loading about page.", 500
-
-@app.route('/profile-setup')
-def profile_setup():
-    """Serve the profile setup page"""
-    try:
-        logger.info(f"Profile setup accessed. Session: {dict(session)}")
-        
-        # Check if user is logged in
-        if 'user_id' not in session:
-            logger.warning("Unauthorized access to profile setup - redirecting to login")
-            flash('Please login to access profile setup', 'error')
-            return redirect('/login-page')
-        
-        logger.info(f"Profile setup page served successfully")
-        return render_template('profile_setup.html')
-        
-    except Exception as e:
-        logger.error(f"Error serving profile setup page: {e}")
-        return f"Error loading profile setup page: {e}", 500
-
-@app.route('/complete-profile', methods=['POST'])
-def complete_profile():
-    """Handle profile completion form submission"""
-    try:
-        if 'user_id' not in session:
-            flash('Please login to complete your profile', 'error')
-            return redirect('/login-page')
-        
-        # Get form data
-        name = request.form.get('name')
-        location = request.form.get('location')
-        bio = request.form.get('bio')
-        
-        logger.info(f"Profile completion for user: {session.get('email')}")
-        
-        # Validate required fields
-        if not name or not location:
-            flash('❌ Please fill in your name and farm location', 'error')
-            return redirect('/profile-setup')
-        
-        # Update user profile in database
-        user_id = session['user_id']
-        users_collection.update_one(
-            {'_id': ObjectId(user_id)},
-            {
-                '$set': {
-                    'profile.name': name,
-                    'profile.location': location,
-                    'profile.bio': bio or '',
-                    'profile_completed': True
-                }
-            }
-        )
-        
-        # Update session
-        session['profile'] = {
-            'name': name,
-            'location': location,
-            'bio': bio or ''
-        }
-        
         # Add JavaScript to store user data in sessionStorage
         flash('🎉 Profile completed successfully! Welcome to CropMarket!', 'success')
         logger.info(f"✅ Profile completed for user: {session.get('email')}")
@@ -406,7 +251,7 @@ def sell_page():
             logger.warning("Unauthorized access to sell page - redirecting to login")
             flash('Please login to access the sell page', 'error')
             return redirect('/login-page')
-        
+
         # Get user data from session
         user_email = session.get('email', 'user@example.com')
         user_phone = session.get('phone', '')
@@ -414,32 +259,32 @@ def sell_page():
         user_name = profile.get('name', user_email.split('@')[0])
         user_location = profile.get('location', '')
         user_bio = profile.get('bio', '')
-        
-        # Get user's own crop listings
-        user_crops = get_user_crops(user_email)
-        
+
+        # Get user's own courses
+        user_courses = get_user_courses(user_email)
+
         logger.info(f"Serving sell page for user: {user_name}")
         return render_template('sell.html', 
-                             user_email=user_email,
-                             user_phone=user_phone,
-                             user_name=user_name,
-                             user_location=user_location,
-                             user_bio=user_bio,
-                             user_crops=user_crops)
+                 user_email=user_email,
+                 user_phone=user_phone,
+                 user_name=user_name,
+                 user_location=user_location,
+                 user_bio=user_bio,
+                 user_courses=user_courses)
     except Exception as e:
         logger.error(f"Error serving sell page: {e}")
         return "Error loading sell page.", 500
 
-@app.route('/market')
-def market_page():
-    """Market updates page"""
+@app.route('/announcements')
+def announcements_page():
+    """Announcements page"""
     try:
         # Check if user is logged in
         if 'user_id' not in session:
-            logger.warning("Unauthorized access to market page - redirecting to login")
-            flash('Please login to access the market page', 'error')
+            logger.warning("Unauthorized access to announcements page - redirecting to login")
+            flash('Please login to access the announcements page', 'error')
             return redirect('/login-page')
-        
+
         # Get user data from session
         user_email = session.get('email', 'user@example.com')
         user_phone = session.get('phone', '')
@@ -447,30 +292,30 @@ def market_page():
         user_name = profile.get('name', user_email.split('@')[0])
         user_location = profile.get('location', '')
         user_bio = profile.get('bio', '')
-        
-        # Get market updates from database
-        market_updates = get_market_updates()
-        
-        logger.info(f"Serving market page for user: {user_name}")
-        return render_template('market.html', 
+
+        # Get announcements from database
+        announcements = get_announcements()
+
+        logger.info(f"Serving announcements page for user: {user_name}")
+        return render_template('announcements.html', 
                              user_email=user_email,
                              user_phone=user_phone,
                              user_name=user_name,
                              user_location=user_location,
                              user_bio=user_bio,
-                             market_updates=market_updates)
+                             announcements=announcements)
     except Exception as e:
-        logger.error(f"Error serving market page: {e}")
-        return "Error loading market page.", 500
+        logger.error(f"Error serving announcements page: {e}")
+        return "Error loading announcements page.", 500
 
-@app.route('/buy')
-def buy_page():
-    """Buy crops page"""
+@app.route('/courses')
+def courses_page():
+    """Courses page"""
     try:
         # Check if user is logged in
         if 'user_id' not in session:
-            logger.warning("Unauthorized access to buy page - redirecting to login")
-            flash('Please login to access the buy page', 'error')
+            logger.warning("Unauthorized access to courses page - redirecting to login")
+            flash('Please login to access the courses page', 'error')
             return redirect('/login-page')
         
         # Get user data from session
@@ -481,35 +326,28 @@ def buy_page():
         user_location = profile.get('location', '')
         user_bio = profile.get('bio', '')
         
-        # Get crops from database with filters
+        # Get courses from database with filters
         filters = {}
         category = request.args.get('category')
         location = request.args.get('location')
-        price_min = request.args.get('price_min', type=float)
-        price_max = request.args.get('price_max', type=float)
-        
         if category:
             filters['category'] = category
         if location:
             filters['location'] = location
-        if price_min is not None:
-            filters['price_min'] = price_min
-        if price_max is not None:
-            filters['price_max'] = price_max
         
-        crops = get_crops(filters)
+        courses = get_courses(filters)
         
-        logger.info(f"Serving buy page for user: {user_name}")
-        return render_template('buy.html', 
+        logger.info(f"Serving courses page for user: {user_name}")
+        return render_template('courses.html', 
                              user_email=user_email,
                              user_phone=user_phone,
                              user_name=user_name,
                              user_location=user_location,
                              user_bio=user_bio,
-                             crops=crops)
+                             courses=courses)
     except Exception as e:
-        logger.error(f"Error serving buy page: {e}")
-        return "Error loading buy page.", 500
+        logger.error(f"Error serving courses page: {e}")
+        return "Error loading courses page.", 500
 
 @app.route('/test-booking')
 def test_booking():
@@ -522,14 +360,14 @@ def debug_session():
     return f"Session data: {dict(session)}"
 
 # Market Updates API Routes
-@app.route('/api/market-updates', methods=['GET'])
-def api_get_market_updates():
-    """Get all market updates"""
+@app.route('/api/announcements', methods=['GET'])
+def api_get_announcements():
+    """Get all announcements"""
     try:
-        updates = get_market_updates()
-        return jsonify({"success": True, "updates": updates})
+        announcements = get_announcements()
+        return jsonify({"success": True, "announcements": announcements})
     except Exception as e:
-        logger.error(f"Error getting market updates: {e}")
+        logger.error(f"Error getting announcements: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/market-updates', methods=['POST'])
@@ -666,40 +504,38 @@ def api_get_crops():
         logger.error(f"Error getting crops: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-@app.route('/api/crops', methods=['POST'])
-def api_add_crop():
-    """Add a new crop listing"""
+@app.route('/api/announcements', methods=['POST'])
+def api_add_announcement():
+    """Add a new announcement"""
     try:
         data = request.get_json()
-        logger.info(f"Received crop data: {data}")
-        
         # Validate required fields
-        required_fields = ['name', 'category', 'quantity', 'price_per_kg', 'location', 'description']
+        required_fields = ['title', 'category', 'description']
         for field in required_fields:
             if field not in data or not data[field]:
-                logger.error(f"Missing required field: {field}")
                 return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
-        
         # Get user info from session
         user_email = session.get('email', 'anonymous@example.com')
         user_name = session.get('profile', {}).get('name', user_email.split('@')[0])
-        
-        # Create crop data
-        crop_data = {
-            'name': data['name'],
+        # Create announcement data
+        announcement_data = {
+            'title': data['title'],
             'category': data['category'],
-            'quantity': int(data['quantity']),
-            'price_per_kg': float(data['price_per_kg']),
-            'total_price': int(data['quantity']) * float(data['price_per_kg']),
-            'location': data['location'],
             'description': data['description'],
-            'seller_name': user_name,
-            'seller_email': user_email,
-            'seller_phone': session.get('phone', ''),
-            'is_active': True,
+            'author': user_name,
+            'author_email': user_email,
             'created_at': datetime.utcnow()
         }
-        
+        # Add to database
+        announcement_id = add_announcement(announcement_data)
+        if announcement_id:
+            announcement_data['_id'] = announcement_id
+            return jsonify({"success": True, "announcement": announcement_data})
+        else:
+            return jsonify({"success": False, "error": "Failed to add announcement"}), 500
+    except Exception as e:
+        logger.error(f"Error adding announcement: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
         # Add to database
         crop_id = add_crop(crop_data)
         
@@ -824,6 +660,7 @@ def login():
                 session['user_id'] = str(user['_id'])
                 session['email'] = user['email']
                 session['phone'] = user.get('phone', '')
+                session['username'] = user.get('username', user['email'])
                 session['profile'] = user.get('profile', {})
                 flash('🎉 Login successful! Welcome back!', 'success')
                 logger.info(f"✅ User {email} logged in successfully, redirecting to booking page")
@@ -899,10 +736,18 @@ def signup():
         logger.info(f"Creating user: {email}")
         logger.info(f"Hashed password: {hashed_password[:20]}...")
         
+        # Generate a unique username if email is already taken as username
+        username = email
+        counter = 1
+        while users_collection.find_one({'username': username}):
+            username = f"{email}_{counter}"
+            counter += 1
+        
         user_data = {
             'email': email,
             'phone': phone,
             'password': hashed_password,
+            'username': username,
             'created_at': datetime.utcnow(),
             'last_login': None,
             'is_active': True,
@@ -919,6 +764,7 @@ def signup():
             session['user_id'] = str(result.inserted_id)
             session['email'] = email
             session['phone'] = phone
+            session['username'] = username
             session['profile'] = user_data['profile']
             flash('🎉 Account created successfully! Please complete your profile.', 'success')
             logger.info(f"✅ New user registered successfully: {email} ({phone})")
@@ -937,6 +783,8 @@ def signup():
             flash('❌ This email is already registered. Please use a different email or try logging in.', 'error')
         elif "E11000" in error_msg and "phone" in error_msg:
             flash('❌ This phone number is already registered. Please use a different phone number.', 'error')
+        elif "E11000" in error_msg and "username" in error_msg:
+            flash('❌ This email is already registered as a username. Please try logging in instead.', 'error')
         elif "E11000" in error_msg:
             flash('❌ Account already exists with this information. Please try logging in instead.', 'error')
         else:
@@ -1000,12 +848,25 @@ if __name__ == '__main__':
         try:
             users_collection.drop_index("username_1")
             log_info("Dropped old username index")
-        except:
-            pass  # Index doesn't exist, that's fine
+        except Exception as e:
+            log_info(f"Username index drop result: {e}")
+        
+        # Clean up existing users with null usernames
+        try:
+            result = users_collection.update_many(
+                {"username": None},
+                {"$set": {"username": "$email"}}
+            )
+            if result.modified_count > 0:
+                log_info(f"Updated {result.modified_count} users with null usernames")
+        except Exception as e:
+            log_warning(f"Error updating null usernames: {e}")
         
         # Create new indexes
         users_collection.create_index("email", unique=True)
         users_collection.create_index("phone", unique=True)
+        # Create username index with sparse option to allow null values
+        users_collection.create_index("username", unique=True, sparse=True)
         log_success("Database indexes created successfully")
     except Exception as e:
         log_warning(f"Index creation warning: {e}")

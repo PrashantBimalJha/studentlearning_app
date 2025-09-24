@@ -1,6 +1,6 @@
-# Farming App - Agricultural Management Platform
+# Student Learning Platform - Education Management System
 
-A comprehensive agricultural management platform built with Flask and modern web technologies.
+A comprehensive student learning platform built with Flask and modern web technologies.
 
 ## Environment Setup
 
@@ -19,7 +19,7 @@ A comprehensive agricultural management platform built with Flask and modern web
    Edit `.env` file with your actual values:
    - `MONGO_URI`: Your MongoDB connection string
    - `SECRET_KEY`: Generate a secure secret key
-   - `DB_NAME`: Your database name
+   - `DB_NAME`: Your database name (e.g., student_learning)
 
 4. **Install dependencies**
    ```bash

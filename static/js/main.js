@@ -50,13 +50,13 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const storyName = this.querySelector('.story-name');
             if (storyName) {
-                const cropType = storyName.textContent.toLowerCase();
-                if (cropType === 'your story') {
-                    // Show user's own listings
-                    showMyListings();
+                const courseType = storyName.textContent.toLowerCase();
+                if (courseType === 'your story') {
+                    // Show user's own courses
+                    showMyCourses();
                 } else {
-                    // Filter crops by type
-                    filterCropsByType(cropType);
+                    // Filter courses by type
+                    filterCoursesByType(courseType);
                 }
             }
         });

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Farming App{% endblock %}</title>
+    <title>{% block title %}Student Learning Platform{% endblock %}</title>
     <link rel="stylesheet" href="/styles.css">
     <script src="/script.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
@@ -13,15 +13,15 @@
     <nav>
         <div class="nav-container">
             <div class="nav-brand">
-                <h1>🌱 Farming App</h1>
-                <p>Agricultural Management Platform</p>
+                <h1>� Student Learning Platform</h1>
+                <p>Education Management System</p>
             </div>
             <div class="nav-links">
                 <a href="/" class="nav-link">Home</a>
                 <a href="/login-page" class="nav-link" id="login-nav-link">Login</a>
                 <a href="/signup-page" class="nav-link" id="signup-nav-link">Sign Up</a>
                 <a href="/about" class="nav-link">About Us</a>
-                <a href="#" class="nav-link" onclick="shareApp(); return false;" style="background: linear-gradient(45deg, #4CAF50, #45a049); color: white; border-radius: 5px;">📤 Share</a>
+                <a href="#" class="nav-link" onclick="shareApp(); return false;" style="background: linear-gradient(45deg, #0077cc, #45a049); color: white; border-radius: 5px;">📤 Share</a>
                 <a href="/logout" class="nav-link logout-btn" id="logout-nav-link" style="display: none;">Logout</a>
                 
                 <!-- Profile Dropdown (shown when logged in) -->

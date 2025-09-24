@@ -20,8 +20,8 @@ window.toggleProfileDropdown = toggleProfileDropdown;
 
 // Update profile display with current data
 function updateProfileDisplay() {
-    const userName = sessionStorage.getItem('userName') || 'Farmer';
-    const userEmail = sessionStorage.getItem('userEmail') || 'farmer@example.com';
+    const userName = sessionStorage.getItem('userName') || 'Student';
+    const userEmail = sessionStorage.getItem('userEmail') || 'student@example.com';
     
     // Update profile initials
     const profileInitial = document.getElementById('profile-initial');

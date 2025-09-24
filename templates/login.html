@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Login - Farming App{% endblock %}
+{% block title %}Login - Student Learning Platform{% endblock %}
 
 {% block content %}
 <div class="login-page">
     <div class="form-container">
-        <h2 class="form-title">🌱 Login</h2>
+    <h2 class="form-title">� Login</h2>
         
         <form action="/login" method="POST" id="loginForm">
             <div class="form-group">
@@ -16,9 +16,9 @@
                 <label class="form-label" for="password">Password</label>
                 <input type="password" name="password" id="password" placeholder="Enter your password" required>
             </div>
-            <button type="submit">Login to Farming App</button>
+            <button type="submit">Login to Student Platform</button>
         </form>
-        <p style="margin-top: 30px; color: #6c757d;">Don't have an account? <a href="/signup-page" style="color: #28a745; font-weight: bold;">Sign Up</a></p>
+    <p style="margin-top: 30px; color: #6c757d;">Don't have an account? <a href="/signup-page" style="color: #0077cc; font-weight: bold;">Sign Up</a></p>
     </div>
 </div>
 {% endblock %}

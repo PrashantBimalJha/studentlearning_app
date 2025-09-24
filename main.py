@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-🌱 FARMING APP - Agricultural Management Platform 🌱
+� STUDENT LEARNING PLATFORM - Education Management System �
 
-Main entry point for the Farming App.
+Main entry point for the Student Learning Platform.
 This script starts the Flask application with proper logging and error handling.
 
 Usage:
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     # Test MongoDB connection
     try:
         client = MongoClient(MONGO_URI)
-        db_name = os.getenv('DB_NAME', 'farming')
+        db_name = os.getenv('DB_NAME', 'student_learning')
         db = client[db_name]
         # Test the connection
         client.admin.command('ping')
@@ -87,11 +87,11 @@ if __name__ == '__main__':
     host = os.getenv('FLASK_HOST', '0.0.0.0')
     port = int(os.getenv('FLASK_PORT', 5000))
 
-    log_info(f"Starting Farming App server on {host}:{port}")
+    log_info(f"Starting Student Learning Platform server on {host}:{port}")
     log_info(f"Debug mode: {'ON' if debug_mode else 'OFF'}")
-    log_success("🌱 Farming App is ready! Press Ctrl+C to stop.")
+    log_success("� Student Learning Platform is ready! Press Ctrl+C to stop.")
     print(f"\n{'='*60}")
-    print(f"🌐 ACCESS YOUR FARMING APP:")
+    print(f"🌐 ACCESS YOUR STUDENT LEARNING PLATFORM:")
     print(f"   Local:   http://localhost:{port}")
     print(f"   Network: http://127.0.0.1:{port}")
     print(f"   External: http://192.168.1.7:{port}")
@@ -118,8 +118,8 @@ if __name__ == '__main__':
     try:
         app.run(debug=debug_mode, host=host, port=port)
     except KeyboardInterrupt:
-        log_info("Shutting down Farming App...")
-        log_success("👋 Farming App stopped successfully!")
+        log_info("Shutting down Student Learning Platform...")
+        log_success("👋 Student Learning Platform stopped successfully!")
     except Exception as e:
-        log_error(f"Farming App crashed: {e}")
+        log_error(f"Student Learning Platform crashed: {e}")
         sys.exit(1)
