@@ -50,13 +50,13 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const storyName = this.querySelector('.story-name');
             if (storyName) {
-                const courseType = storyName.textContent.toLowerCase();
-                if (courseType === 'your story') {
-                    // Show user's own courses
-                    showMyCourses();
+                const cropType = storyName.textContent.toLowerCase();
+                if (cropType === 'your story') {
+                    // Show user's own listings
+                    showMyListings();
                 } else {
-                    // Filter courses by type
-                    filterCoursesByType(courseType);
+                    // Filter crops by type
+                    filterCropsByType(cropType);
                 }
             }
         });
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
             email: sessionStorage.getItem('userEmail') || 'user@example.com',
             phone: sessionStorage.getItem('userPhone') || '+91 9876543210',
             location: sessionStorage.getItem('userLocation') || 'India',
-            bio: sessionStorage.getItem('userBio') || 'Farming enthusiast'
+            bio: sessionStorage.getItem('userBio') || 'Learning enthusiast'
         };
         
         const nameField = document.getElementById('profile-name');
@@ -559,3 +559,196 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Ensure forms are centered on page load
 window.addEventListener('load', centerForms);
+
+// Share App functionality
+let isSharing = false; // Prevent multiple simultaneous share attempts
+
+function shareApp() {
+    if (isSharing) {
+        console.log('Share already in progress, please wait...');
+        return;
+    }
+    
+        const appUrl = 'https://6a589d967348.ngrok-free.app'; // Current ngrok URL
+    const message = 'Check out this amazing learning app! 🎓';
+    
+    isSharing = true;
+    
+    if (navigator.share && navigator.canShare) {
+        // Use native sharing if available and supported
+        const shareData = {
+            title: 'Learning App - Student Learning Platform',
+            text: message,
+            url: appUrl
+        };
+        
+        if (navigator.canShare(shareData)) {
+            navigator.share(shareData)
+                .then(() => {
+                    console.log('Share successful');
+                    showSharePrompt('Shared successfully!');
+                })
+                .catch(err => {
+                    console.log('Share cancelled or failed:', err);
+                    if (err.name !== 'AbortError') {
+                        // Only try clipboard if it's not a user cancellation
+                        copyToClipboard(appUrl);
+                    }
+                })
+                .finally(() => {
+                    isSharing = false;
+                });
+        } else {
+            // Can't share this data, try clipboard
+            copyToClipboard(appUrl);
+            isSharing = false;
+        }
+    } else {
+        // Fallback to copy to clipboard
+        copyToClipboard(appUrl);
+        isSharing = false;
+    }
+}
+
+function copyToClipboard(text) {
+    // Try modern clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                console.log('Copied to clipboard successfully');
+                showSharePrompt('Link copied to clipboard!');
+            })
+            .catch(err => {
+                console.log('Modern clipboard failed, trying fallback:', err);
+                fallbackCopyToClipboard(text);
+            });
+    } else {
+        // Use fallback method
+        fallbackCopyToClipboard(text);
+    }
+}
+
+function fallbackCopyToClipboard(text) {
+    try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        textArea.style.opacity = '0';
+        textArea.setAttribute('readonly', '');
+        document.body.appendChild(textArea);
+        
+        // Select and copy
+        textArea.select();
+        textArea.setSelectionRange(0, 99999); // For mobile devices
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+            console.log('Fallback copy successful');
+            showSharePrompt('Link copied to clipboard!');
+        } else {
+            throw new Error('execCommand copy failed');
+        }
+    } catch (err) {
+        console.error('Fallback copy failed:', err);
+        showManualCopyPrompt(text);
+    }
+}
+
+function showSharePrompt(message = 'Link copied to clipboard!') {
+    const prompt = document.createElement('div');
+    prompt.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #4CAF50;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 10000;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        max-width: 300px;
+    `;
+    prompt.innerHTML = `
+        <h3>📤 ${message}</h3>
+        <p>Share this learning app with others!</p>
+        <button onclick="this.parentElement.remove()" style="
+            background: white;
+            color: #4CAF50;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        ">OK</button>
+    `;
+    
+    document.body.appendChild(prompt);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        if (prompt.parentElement) {
+            prompt.remove();
+        }
+    }, 4000);
+}
+
+function showManualCopyPrompt(text) {
+    const prompt = document.createElement('div');
+    prompt.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #ff6b6b;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 10000;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        max-width: 400px;
+    `;
+    prompt.innerHTML = `
+        <h3>📋 Manual Copy Required</h3>
+        <p>Please copy this link manually:</p>
+        <div style="
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            word-break: break-all;
+            font-family: monospace;
+        ">${text}</div>
+        <button onclick="this.parentElement.remove()" style="
+            background: white;
+            color: #ff6b6b;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        ">OK</button>
+    `;
+    
+    document.body.appendChild(prompt);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        if (prompt.parentElement) {
+            prompt.remove();
+        }
+    }, 10000);
+}
+
+// Make functions globally accessible
+window.shareApp = shareApp;
+window.copyToClipboard = copyToClipboard;
+window.showSharePrompt = showSharePrompt;

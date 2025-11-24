@@ -24,8 +24,8 @@ class ColoredFormatter(logging.Formatter):
         color = self.COLORS.get(record.levelname, '')
         return f"{color}{log_message}{Style.RESET_ALL}"
 
-def setup_logger(name="FarmingApp", level=logging.INFO):
-    """Setup a colored logger for the Farming App"""
+def setup_logger(name="LearningApp", level=logging.INFO):
+    """Setup a colored logger for the Learning App"""
     
     # Create logger
     logger = logging.getLogger(name)
@@ -51,9 +51,9 @@ def setup_logger(name="FarmingApp", level=logging.INFO):
     return logger
 
 def log_startup():
-    """Log startup banner for Farming App"""
+    """Log startup banner for Learning App"""
     print(f"\n{Fore.CYAN}{'='*60}")
-    print(f"{Fore.GREEN}🌱 FARMING APP - Agricultural Management Platform 🌱")
+    print(f"{Fore.GREEN}🎓 LEARNING APP - Student Learning Platform 🎓")
     print(f"{Fore.CYAN}{'='*60}")
     print(f"{Fore.YELLOW}Starting application...")
     print(f"{Fore.CYAN}{'='*60}\n")

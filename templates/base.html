@@ -3,25 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Student Learning Platform{% endblock %}</title>
+    <title>{% block title %}Learning App{% endblock %}</title>
     <link rel="stylesheet" href="/styles.css">
     <script src="/script.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Marked.js for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
 </head>
 <body>
     <!-- Navigation Header -->
     <nav>
         <div class="nav-container">
             <div class="nav-brand">
-                <h1>� Student Learning Platform</h1>
-                <p>Education Management System</p>
+                <h1>🎓 Learning App</h1>
+                <p>Student Learning Platform</p>
             </div>
             <div class="nav-links">
                 <a href="/" class="nav-link">Home</a>
                 <a href="/login-page" class="nav-link" id="login-nav-link">Login</a>
                 <a href="/signup-page" class="nav-link" id="signup-nav-link">Sign Up</a>
                 <a href="/about" class="nav-link">About Us</a>
-                <a href="#" class="nav-link" onclick="shareApp(); return false;" style="background: linear-gradient(45deg, #0077cc, #45a049); color: white; border-radius: 5px;">📤 Share</a>
+                <a href="#" class="nav-link" onclick="shareApp(); return false;" style="background: linear-gradient(45deg, #4CAF50, #45a049); color: white; border-radius: 5px;">📤 Share</a>
                 <a href="/logout" class="nav-link logout-btn" id="logout-nav-link" style="display: none;">Logout</a>
                 
                 <!-- Profile Dropdown (shown when logged in) -->
@@ -55,6 +58,10 @@
                                 <span class="action-icon">📊</span>
                                 <span>My Listings</span>
                             </a>
+                            <a href="/chat" class="profile-action">
+                                <span class="action-icon">🤖</span>
+                                <span>AI Chat Support</span>
+                            </a>
                             <a href="#" class="profile-action" onclick="shareApp()">
                                 <span class="action-icon">📤</span>
                                 <span>Share App</span>
@@ -72,7 +79,18 @@
     </nav>
 
     <!-- Flash Messages -->
-    <div id="flash-messages"></div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div id="flash-messages" class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        <span class="flash-text">{{ message }}</span>
+                        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
     <!-- Page Content -->
     {% block content %}{% endblock %}
@@ -108,7 +126,7 @@
                     </div>
                     <div class="form-group">
                         <label for="profile-bio">Bio</label>
-                        <textarea id="profile-bio" placeholder="Tell us about your farming experience..." rows="3"></textarea>
+                        <textarea id="profile-bio" placeholder="Tell us about your learning interests..." rows="3"></textarea>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" onclick="closeProfileModal()">Cancel</button>
@@ -177,5 +195,379 @@
             </div>
         </div>
     </div>
+    
+    <!-- Action Buttons Section - Fixed at Bottom -->
+    <div class="action-buttons-section">
+        <div class="action-buttons-container">
+            <a href="/assignments" class="action-btn assignments-btn">
+                <span class="btn-icon">📝</span>
+                <span class="btn-text">Assignments</span>
+            </a>
+            <a href="/courses" class="action-btn courses-btn">
+                <span class="btn-icon">📚</span>
+                <span class="btn-text">My Courses</span>
+            </a>
+            <a href="/learn" class="action-btn learn-btn">
+                <span class="btn-icon">🎮</span>
+                <span class="btn-text">Learn with Games</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Chatbot Widget -->
+    <div id="chatbot-container">
+        <!-- Chatbot Button -->
+        <button id="chatbot-button" class="chatbot-button" title="Chat with Assistant">
+            <span class="chatbot-icon">💬</span>
+            <span class="chatbot-badge" id="chatbot-badge" style="display: none;">1</span>
+        </button>
+
+        <!-- Chatbot Window -->
+        <div id="chatbot-window" class="chatbot-window" style="display: none;">
+            <div class="chatbot-header">
+                <div class="chatbot-header-info">
+                    <div class="chatbot-avatar">🎓</div>
+                    <div class="chatbot-header-text">
+                        <h3>Learning Assistant</h3>
+                        <p>Online</p>
+                    </div>
+                </div>
+                <button id="chatbot-close" class="chatbot-close">×</button>
+            </div>
+            <div id="chatbot-messages" class="chatbot-messages">
+                <!-- Messages will be added here -->
+            </div>
+            <div class="chatbot-input-container">
+                <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Ask me about courses, assignments, or learning...">
+                <button id="chatbot-send" class="chatbot-send">
+                    <span>➤</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Message Auto-Hide Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(message) {
+                // Auto-hide after 5 seconds
+                setTimeout(function() {
+                    message.classList.add('fade-out');
+                    setTimeout(function() {
+                        if (message.parentElement) {
+                            message.remove();
+                        }
+                    }, 300);
+                }, 5000);
+            });
+        });
+
+        // Floating Chat Functions
+        function openFloatingChat() {
+            const widget = document.getElementById('floatingChatWidget');
+            const btn = document.getElementById('floatingChatBtn');
+            
+            if (widget.style.display === 'none') {
+                widget.style.display = 'block';
+                btn.style.display = 'none';
+                
+                // Ensure input is visible and focused
+                setTimeout(() => {
+                    const input = document.getElementById('floatingChatInput');
+                    if (input) {
+                        input.style.display = 'block';
+                        input.style.visibility = 'visible';
+                        input.style.opacity = '1';
+                        input.focus();
+                    }
+                }, 100);
+            }
+        }
+
+        function closeFloatingChat() {
+            const widget = document.getElementById('floatingChatWidget');
+            const btn = document.getElementById('floatingChatBtn');
+            
+            widget.style.display = 'none';
+            btn.style.display = 'flex';
+        }
+
+        function minimizeChat() {
+            const widget = document.getElementById('floatingChatWidget');
+            const btn = document.getElementById('floatingChatBtn');
+            
+            widget.style.display = 'none';
+            btn.style.display = 'flex';
+        }
+
+        function clearFloatingChat() {
+            const messages = document.getElementById('floatingChatMessages');
+            if (messages) {
+                // Keep only the welcome message
+                messages.innerHTML = `
+                    <div class="welcome-msg">
+                        <div class="welcome-icon">👋</div>
+                        <p>Hi! I'm your AI tutor. How can I help you today?</p>
+                    </div>
+                `;
+            }
+            
+            // Also clear the server-side chat history
+            fetch('/api/chat/clear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Chat history cleared:', data);
+            })
+            .catch(error => {
+                console.error('Error clearing chat history:', error);
+            });
+        }
+
+        function sendFloatingMessage() {
+            const input = document.getElementById('floatingChatInput');
+            const inputContainer = document.querySelector('.chat-widget-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addFloatingMessage('user', message);
+            input.value = '';
+            
+            // Force input container to stay visible and positioned
+            if (inputContainer) {
+                inputContainer.style.position = 'absolute';
+                inputContainer.style.bottom = '0';
+                inputContainer.style.left = '0';
+                inputContainer.style.right = '0';
+                inputContainer.style.zIndex = '10';
+                inputContainer.style.display = 'flex';
+                inputContainer.style.visibility = 'visible';
+                inputContainer.style.opacity = '1';
+            }
+            
+            // Ensure input stays visible and focused
+            input.style.display = 'block';
+            input.style.visibility = 'visible';
+            input.style.opacity = '1';
+            input.focus();
+            
+            // Add thinking message
+            addFloatingMessage('ai', '🤔 Thinking...');
+            
+            // Send to real AI API
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question: message
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messages = document.getElementById('floatingChatMessages');
+                const lastMsg = messages.lastElementChild;
+                
+                if (data.success && lastMsg && lastMsg.classList.contains('ai')) {
+                    // Replace thinking message with AI response
+                    lastMsg.innerHTML = `
+                        <div class="message-content">
+                            <div class="message-text">${data.response}</div>
+                            <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                        </div>
+                    `;
+                } else {
+                    // Show error message
+                    if (lastMsg && lastMsg.classList.contains('ai')) {
+                        lastMsg.innerHTML = `
+                            <div class="message-content">
+                                <div class="message-text">Sorry, I'm having trouble connecting to the AI service. Please try again later or use the full chat page.</div>
+                                <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                // Ensure input container and input are still visible after AI response
+                if (inputContainer) {
+                    inputContainer.style.position = 'absolute';
+                    inputContainer.style.bottom = '0';
+                    inputContainer.style.left = '0';
+                    inputContainer.style.right = '0';
+                    inputContainer.style.zIndex = '10';
+                    inputContainer.style.display = 'flex';
+                    inputContainer.style.visibility = 'visible';
+                    inputContainer.style.opacity = '1';
+                }
+                
+                input.style.display = 'block';
+                input.style.visibility = 'visible';
+                input.style.opacity = '1';
+                input.focus();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messages = document.getElementById('floatingChatMessages');
+                const lastMsg = messages.lastElementChild;
+                
+                if (lastMsg && lastMsg.classList.contains('ai')) {
+                    lastMsg.innerHTML = `
+                        <div class="message-content">
+                            <div class="message-text">Sorry, I'm having trouble connecting to the AI service. Please try again later or use the full chat page.</div>
+                            <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                        </div>
+                    `;
+                }
+                
+                // Ensure input container and input are still visible after error
+                if (inputContainer) {
+                    inputContainer.style.position = 'absolute';
+                    inputContainer.style.bottom = '0';
+                    inputContainer.style.left = '0';
+                    inputContainer.style.right = '0';
+                    inputContainer.style.zIndex = '10';
+                    inputContainer.style.display = 'flex';
+                    inputContainer.style.visibility = 'visible';
+                    inputContainer.style.opacity = '1';
+                }
+                
+                input.style.display = 'block';
+                input.style.visibility = 'visible';
+                input.style.opacity = '1';
+                input.focus();
+            });
+        }
+
+        function addFloatingMessage(sender, content) {
+            const messages = document.getElementById('floatingChatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `floating-message ${sender}`;
+            
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="message-text">${content}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            messages.appendChild(messageDiv);
+            
+            // Smooth scroll to bottom
+            setTimeout(() => {
+                messages.scrollTo({
+                    top: messages.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+
+        // Enter key support for floating chat
+        document.getElementById('floatingChatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendFloatingMessage();
+            }
+        });
+
+        // Function to ensure input field is always visible
+        function ensureInputVisible() {
+            const input = document.getElementById('floatingChatInput');
+            const inputContainer = document.querySelector('.chat-widget-input');
+            
+            if (input) {
+                input.style.display = 'block';
+                input.style.visibility = 'visible';
+                input.style.opacity = '1';
+                input.style.width = '100%';
+                input.style.background = 'white';
+                input.style.color = '#333';
+                input.style.border = '2px solid #667eea';
+                input.style.height = '50px';
+                input.style.padding = '15px 20px';
+                input.style.fontSize = '16px';
+                input.style.borderRadius = '12px';
+                input.style.boxSizing = 'border-box';
+                input.style.position = 'relative';
+                input.style.zIndex = '10';
+            }
+            
+            if (inputContainer) {
+                inputContainer.style.display = 'flex';
+                inputContainer.style.visibility = 'visible';
+                inputContainer.style.opacity = '1';
+                inputContainer.style.background = 'white';
+                inputContainer.style.width = '100%';
+                inputContainer.style.minHeight = '80px';
+                inputContainer.style.padding = '20px 25px';
+                inputContainer.style.boxSizing = 'border-box';
+                inputContainer.style.position = 'absolute';
+                inputContainer.style.bottom = '0';
+                inputContainer.style.left = '0';
+                inputContainer.style.right = '0';
+                inputContainer.style.zIndex = '10';
+            }
+        }
+
+        // Check input visibility periodically
+        setInterval(ensureInputVisible, 1000);
+        
+        // Force input visibility on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(ensureInputVisible, 100);
+            setTimeout(ensureInputVisible, 500);
+            setTimeout(ensureInputVisible, 1000);
+        });
+
+        // Highlight active action button based on current page
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const actionButtons = document.querySelectorAll('.action-btn');
+            
+            console.log('Current path:', currentPath);
+            console.log('Found action buttons:', actionButtons.length);
+            
+            actionButtons.forEach(button => {
+                const href = button.getAttribute('href');
+                console.log('Button href:', href);
+                if (currentPath === href) {
+                    button.classList.add('active');
+                    console.log('Added active class to:', href);
+                }
+            });
+            
+            // Debug: Check if action buttons section is visible
+            const actionSection = document.querySelector('.action-buttons-section');
+            if (actionSection) {
+                console.log('Action buttons section found:', actionSection);
+                console.log('Action buttons section display:', window.getComputedStyle(actionSection).display);
+                console.log('Action buttons section visibility:', window.getComputedStyle(actionSection).visibility);
+                console.log('Action buttons section position:', window.getComputedStyle(actionSection).position);
+                console.log('Action buttons section bottom:', window.getComputedStyle(actionSection).bottom);
+                console.log('Action buttons section z-index:', window.getComputedStyle(actionSection).zIndex);
+                console.log('Action buttons section opacity:', window.getComputedStyle(actionSection).opacity);
+                
+                // Force make it visible
+                actionSection.style.display = 'block';
+                actionSection.style.visibility = 'visible';
+                actionSection.style.opacity = '1';
+                actionSection.style.position = 'fixed';
+                actionSection.style.bottom = '0';
+                actionSection.style.left = '0';
+                actionSection.style.right = '0';
+                actionSection.style.zIndex = '999';
+            } else {
+                console.log('Action buttons section NOT found!');
+            }
+        });
+    </script>
 </body>
 </html>

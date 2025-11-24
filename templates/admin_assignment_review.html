@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Review Assignment - Learning App{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <div class="learning-feed">
+        <div class="page-header">
+            <div class="header-content">
+                <h1>📝 Review Assignment</h1>
+                <p>{{ assignment.title }} – {{ assignment.course }}</p>
+                <p>Student: {{ assignment.student_email or 'Unknown' }} • Score: {{ assignment.score if assignment.score is not none else '-' }}/{{ assignment.points }} • Rating: {{ '%.1f'|format(assignment.rating) if assignment.rating is not none else '-' }}/5</p>
+            </div>
+            <div>
+                <a href="/admin" class="btn-secondary">← Back to Admin</a>
+            </div>
+        </div>
+
+        {% if assignment.assignment_type != 'quiz_mcq' %}
+        <p>This assignment is not an MCQ quiz. You can adjust marks from the main admin page.</p>
+        {% else %}
+        {% if not results %}
+        <p>No detailed quiz results found. The student may not have completed this quiz yet.</p>
+        {% else %}
+        <form method="POST" action="/admin/assignments/{{ assignment._id }}/review">
+            <div class="recent-activity">
+                <h3>Questions</h3>
+                <div class="activity-list">
+                    {% for r in results %}
+                    <div class="activity-item" style="align-items:flex-start;">
+                        <div class="activity-icon">
+                            {% if r.is_correct %}✅{% else %}❌{% endif %}
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">
+                                Q{{ loop.index }}. {{ r.question }}
+                            </div>
+                            <div class="activity-meta">
+                                <ul style="list-style:none; padding:0; margin:4px 0;">
+                                    {% set labels = ['A','B','C','D','E','F'] %}
+                                    {% for opt in r.options %}
+                                    {% set idx = loop.index0 %}
+                                    {% set label = labels[idx] if idx < (labels|length) else idx %}
+                                    {% set is_correct_opt = (idx == r.correct_index) %}
+                                    {% set is_user_opt = (idx == r.user_answer) %}
+                                    {% set color = '#111827' %}
+                                    {% set weight = '400' %}
+                                    {% if is_correct_opt %}
+                                        {% set color = '#16a34a' %}
+                                        {% set weight = '600' %}
+                                    {% elif is_user_opt and not is_correct_opt %}
+                                        {% set color = '#dc2626' %}
+                                        {% set weight = '600' %}
+                                    {% endif %}
+                                    <li style="margin-bottom:2px; color:{{ color }}; font-weight:{{ weight }};">
+                                        {{ label }}. {{ opt }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="activity-meta">
+                                <label>
+                                    <input type="checkbox" name="q_correct_{{ loop.index0 }}" {% if r.is_correct %}checked{% endif %}>
+                                    Treat this question as <strong>correct</strong> for scoring
+                                </label>
+                            </div>
+                            {% if r.explanation %}
+                            <div class="activity-meta">
+                                <strong>Current explanation:</strong> {{ r.explanation }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-actions" style="margin-top:16px;">
+                <button type="submit" class="btn-primary">Save Question Marks &amp; Recalculate Score</button>
+            </div>
+        </form>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+

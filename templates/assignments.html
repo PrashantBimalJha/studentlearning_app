@@ -1,0 +1,1043 @@
+{% extends "base.html" %}
+
+{% block title %}Assignments - Learning App{% endblock %}
+
+{% block content %}
+<div class="assignments-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>📝 Assignments</h1>
+            <p>Track and manage your assignments</p>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <div class="filter-container">
+            <div class="filter-group">
+                <label for="status-filter">Status</label>
+                <select id="status-filter">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="overdue">Overdue</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="course-filter">Course</label>
+                <select id="course-filter">
+                    <option value="">All Courses</option>
+                    <!-- Course options will be populated dynamically -->
+                </select>
+            </div>
+            <button class="filter-btn" onclick="applyFilters()">Apply Filters</button>
+        </div>
+    </div>
+
+    <!-- MCQ Quiz Section -->
+    <div class="quiz-section">
+        <h2>🎯 MCQ Practice</h2>
+        <p>Select a subject to start a 10-question MCQ quiz. The system will start at Level 1 and automatically
+           increase your level as you complete quizzes, giving marks and rating for each level.</p>
+        <div class="quiz-controls">
+            <div class="filter-group">
+                <label for="quiz-course-select">Subject / Course</label>
+                <select id="quiz-course-select">
+                    <option value="">Select Subject</option>
+                    <!-- Options populated dynamically -->
+                </select>
+            </div>
+            <button class="btn-primary" id="startQuizBtn" onclick="startQuizWithAI()">
+                🎯 Start 10 MCQ Quiz (Auto Level)
+        </button>
+        </div>
+    </div>
+
+    <!-- Assignments List -->
+    <div class="assignments-list">
+        {% if assignments %}
+            {% for assignment in assignments %}
+            <div class="assignment-card {{ assignment.status }}"
+                 data-assignment-id="{{ assignment._id }}"
+                 data-assignment-type="{{ assignment.assignment_type or '' }}"
+                 data-assignment-title="{{ assignment.title }}"
+                 data-assignment-description="{{ assignment.description or '' }}"
+                 data-assignment-level="{{ assignment.difficulty_level or 1 }}">
+                <div class="assignment-header">
+                    <div class="assignment-title">{{ assignment.title }}</div>
+                    <div class="assignment-status {{ assignment.status }}">{{ assignment.status|title }}</div>
+                </div>
+                <div class="assignment-content">
+                    <div class="assignment-meta">
+                        <span class="assignment-course">📚 {{ assignment.course }}</span>
+                        <span class="assignment-due-date">📅 Due: {{ assignment.due_date }}</span>
+                        <span class="assignment-points">⭐ {{ assignment.points }} points</span>
+                        <span class="assignment-difficulty">🎯 Level: {{ assignment.difficulty_level or 1 }}</span>
+                    </div>
+                    <div class="assignment-description">{{ assignment.description or 'No description available' }}</div>
+                    <div class="assignment-grades">
+                        <span>Marks: {{ assignment.score if assignment.score is not none else '-' }}/{{ assignment.points }}</span>
+                        <span>Rating: {{ '%.1f'|format(assignment.rating) if assignment.rating is not none else '-' }}/5</span>
+                    </div>
+                </div>
+                <div class="assignment-actions">
+                    <button class="btn-view" onclick="viewAssignment('{{ assignment._id }}')">👁️ View</button>
+                    {% if is_admin %}
+                    <button class="btn-edit" onclick="editAssignment('{{ assignment._id }}')">✏️ Edit</button>
+                    <button class="btn-delete" onclick="deleteAssignment('{{ assignment._id }}')">🗑️ Delete</button>
+                    {% endif %}
+                    <button class="btn-secondary" onclick="reportAssignment('{{ assignment._id }}')">⚠️ Report</button>
+                    {% if assignment.status != 'completed' %}
+                    <button class="btn-primary" onclick="attemptAssignment('{{ assignment._id }}')">✅ Attempt & Get Marks</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-assignments">
+                <div class="no-assignments-icon">📝</div>
+                <h3>No Assignments Yet</h3>
+                <p>Start an AI MCQ quiz above to generate your first assignment and marks automatically.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tic Tac Toe Bonus Game Modal -->
+<div id="ticTacToeModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 420px;">
+        <div class="modal-header">
+            <h2>🎮 Bonus Game – Tic Tac Toe</h2>
+            <span class="close" onclick="closeTicTacToeModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p id="ttt-status-text" style="margin-bottom: 12px;">
+                Great work on your test! Play Tic Tac Toe vs computer (2 games).
+            </p>
+            <div id="ttt-board" class="ttt-board">
+                <button type="button" class="ttt-cell" data-idx="0"></button>
+                <button type="button" class="ttt-cell" data-idx="1"></button>
+                <button type="button" class="ttt-cell" data-idx="2"></button>
+                <button type="button" class="ttt-cell" data-idx="3"></button>
+                <button type="button" class="ttt-cell" data-idx="4"></button>
+                <button type="button" class="ttt-cell" data-idx="5"></button>
+                <button type="button" class="ttt-cell" data-idx="6"></button>
+                <button type="button" class="ttt-cell" data-idx="7"></button>
+                <button type="button" class="ttt-cell" data-idx="8"></button>
+            </div>
+            <div class="form-actions" style="margin-top: 16px; justify-content: space-between;">
+                <button type="button" class="btn-secondary" onclick="finishTicTacToeBonus()">Back to Assignments</button>
+                <button type="button" class="btn-primary" id="ttt-play-again-btn" onclick="resetTicTacToeBoard()">
+                    Play Again
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attempt Assignment Modal -->
+<div id="attemptAssignmentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>✅ Attempt Assignment</h2>
+            <span class="close" onclick="closeAttemptAssignmentModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="attemptAssignmentForm">
+                <input type="hidden" id="attempt-assignment-id">
+                <p id="attempt-assignment-text" class="assignment-question-text" style="margin-bottom: 12px;"></p>
+                <div class="form-group">
+                    <label for="student-answer">Your Answer</label>
+                    <textarea id="student-answer" placeholder="Write your answer here..." rows="4" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAttemptAssignmentModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Submit & Get Marks</button>
+                </div>
+            </form>
+                    </div>
+                    </div>
+</div>
+
+<!-- MCQ Quiz Assignment Modal -->
+<div id="quizAssignmentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🎯 MCQ Quiz - <span id="quiz-level-label">Level 1</span></h2>
+            <span class="close" onclick="closeQuizAssignmentModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="quizAssignmentForm">
+                <input type="hidden" id="quiz-assignment-id">
+                <div id="quiz-questions-container">
+                    <!-- Questions will be injected here -->
+                </div>
+                <div class="form-actions" style="margin-top: 16px;">
+                    <button type="button" class="btn-secondary" onclick="closeQuizAssignmentModal()">Cancel</button>
+                    <button type="button" class="btn-primary" onclick="handleQuizNextOrSubmit()">Next Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Assignment Details Modal -->
+<div id="viewAssignmentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>👁️ Assignment Details</h2>
+            <span class="close" onclick="closeViewAssignmentModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="view-assignment-id">
+            <div id="view-assignment-content">
+                <!-- Details will be injected here -->
+            </div>
+            <div class="form-actions" style="margin-top: 16px;">
+                <button type="button" class="btn-secondary" onclick="reportAssignmentFromModal()">⚠️ Report Assignment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.ttt-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.ttt-cell {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    border: 2px solid #e5e7eb;
+    background: #f9fafb;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ttt-cell:hover {
+    background: #e5e7eb;
+}
+
+.ttt-cell:disabled {
+    cursor: default;
+    background: #e5e7eb;
+}
+</style>
+
+<script>
+// Global state for MCQ quiz flow
+let quizQuestions = [];
+let quizAnswers = [];
+let currentQuizIndex = 0;
+
+function viewAssignment(assignmentId) {
+    fetch(`/api/assignments/${assignmentId}/detail`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Error loading assignment details: ' + (data.error || 'Unknown error'));
+                return;
+            }
+
+            const assignment = data.assignment;
+            const container = document.getElementById('view-assignment-content');
+            if (!container) return;
+
+            // Store current assignment id for reporting
+            const hiddenId = document.getElementById('view-assignment-id');
+            if (hiddenId) {
+                hiddenId.value = assignment.id || assignmentId;
+            }
+
+            let html = '';
+
+            // Common header
+            html += `<h3 style="margin-bottom: 4px;">${assignment.title || 'Assignment'}</h3>`;
+            if (assignment.course) {
+                html += `<p style="margin: 0 0 8px 0;"><strong>Subject:</strong> ${assignment.course}</p>`;
+            }
+            html += `<p style="margin: 0 0 8px 0;">
+                        <strong>Status:</strong> ${assignment.status || 'pending'}
+                        &nbsp;•&nbsp;
+                        <strong>Marks:</strong> ${assignment.score != null ? assignment.score : '-'} / ${assignment.points || 0}
+                        &nbsp;•&nbsp;
+                        <strong>Rating:</strong> ${assignment.rating != null ? assignment.rating.toFixed(1) : '-'} / 5
+                     </p>`;
+
+            // MCQ quiz details
+            if (assignment.type === 'quiz_mcq') {
+                const questions = assignment.questions || [];
+                html += `<p style="margin: 8px 0;"><strong>Level:</strong> ${assignment.difficulty_level || 1}</p>`;
+                html += `<div class="assignment-question-list">`;
+
+                questions.forEach((q, idx) => {
+                    html += `<div class="assignment-question-card" style="padding: 10px 12px; margin-bottom: 10px; border-radius: 8px; background: #f7f7fb;">`;
+                    const isCorrect = q.is_correct === true;
+                    const isWrong = q.is_correct === false;
+                    const statusLabel = isCorrect ? '✅ Correct' : (isWrong ? '❌ Wrong' : '');
+                    const statusColor = isCorrect ? '#16a34a' : (isWrong ? '#dc2626' : '#6b7280');
+
+                    html += `<p style="margin: 0 0 6px 0; font-weight: 600;">${idx + 1}. ${q.question}</p>`;
+                    if (statusLabel) {
+                        html += `<p style="margin: 0 0 6px 0; color: ${statusColor}; font-size: 0.9rem;">${statusLabel}</p>`;
+                    }
+
+                    // Options list
+                    html += `<ul style="list-style: none; padding: 0; margin: 0;">`;
+                    (q.options || []).forEach((opt, optIdx) => {
+                        const isOptCorrect = optIdx === q.correct_index;
+                        const isOptChosen = q.user_answer === optIdx;
+
+                        let color = '#111827';
+                        let weight = '400';
+                        if (isOptCorrect) {
+                            color = '#16a34a';
+                            weight = '600';
+                        } else if (isOptChosen && !isOptCorrect) {
+                            color = '#dc2626';
+                            weight = '600';
+                        }
+
+                        html += `<li style="margin-bottom: 2px; color: ${color}; font-weight: ${weight};">
+                                    ${String.fromCharCode(65 + optIdx)}. ${opt}
+                                 </li>`;
+                    });
+                    html += `</ul>`;
+
+                    // Summary line: which option you chose vs correct option
+                    if (q.user_answer !== null && q.user_answer !== undefined && q.user_answer >= 0) {
+                        const uaIdx = q.user_answer;
+                        const caIdx = q.correct_index;
+                        const uaLabel = String.fromCharCode(65 + uaIdx);
+                        const caLabel = String.fromCharCode(65 + caIdx);
+                        const uaText = (q.options && q.options[uaIdx]) ? q.options[uaIdx] : '';
+                        const caText = (q.options && q.options[caIdx]) ? q.options[caIdx] : '';
+                        const lineColor = isCorrect ? '#16a34a' : '#dc2626';
+                        const verdict = isCorrect ? 'Correct ✅' : 'Incorrect ❌';
+
+                        html += `<p style="margin-top: 6px; font-size: 0.9rem; color: ${lineColor};">
+                                    <strong>Your choice:</strong> ${uaLabel}. ${uaText}
+                                    &nbsp;|&nbsp;
+                                    <strong>Correct:</strong> ${caLabel}. ${caText}
+                                    &nbsp;|&nbsp;
+                                    ${verdict}
+                                 </p>`;
+                    }
+
+                    // Optional explanation (reason why incorrect/correct)
+                    if (q.explanation) {
+                        html += `<p style="margin-top: 4px; font-size: 0.9rem; color: #4b5563;">
+                                    <strong>Why:</strong> ${q.explanation}
+                                 </p>`;
+                    }
+
+                    // Per-question report button
+                    html += `<button type="button" class="btn-secondary" style="margin-top: 6px;"
+                                   onclick="reportQuestion(${idx})">⚠️ Report this question</button>`;
+
+                    html += `</div>`;
+                });
+
+                html += `</div>`;
+
+                if (assignment.feedback) {
+                    html += `<p style="margin-top: 8px;"><strong>Feedback:</strong> ${assignment.feedback}</p>`;
+                }
+            } else {
+                // Text / descriptive assignment
+                html += `<div style="margin-top: 8px;">`;
+                if (assignment.question) {
+                    html += `<p><strong>Question:</strong><br>${assignment.question}</p>`;
+                }
+                if (assignment.student_answer) {
+                    html += `<p><strong>Your Answer:</strong><br>${assignment.student_answer}</p>`;
+                }
+                if (assignment.feedback) {
+                    html += `<p><strong>Feedback:</strong><br>${assignment.feedback}</p>`;
+            }
+                html += `</div>`;
+            }
+
+            container.innerHTML = html;
+            document.getElementById('viewAssignmentModal').style.display = 'flex';
+        })
+        .catch(error => {
+            console.error('Error loading assignment details:', error);
+            alert('An error occurred while loading assignment details.');
+        });
+}
+
+function closeViewAssignmentModal() {
+    const modal = document.getElementById('viewAssignmentModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Report helpers
+function reportAssignment(assignmentId) {
+    const reason = prompt('Describe the problem with this assignment (optional):', '');
+    fetch(`/api/assignments/${assignmentId}/report`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: reason || '' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert('Error reporting assignment: ' + (data.error || 'Unknown error'));
+            return;
+        }
+        alert('Thanks! Your report has been submitted to the admin.');
+    })
+    .catch(error => {
+        console.error('Error reporting assignment:', error);
+        alert('An error occurred while submitting the report.');
+    });
+}
+
+function reportAssignmentFromModal() {
+    const idInput = document.getElementById('view-assignment-id');
+    if (idInput && idInput.value) {
+        reportAssignment(idInput.value);
+    }
+}
+
+function reportQuestion(questionIndex) {
+    const idInput = document.getElementById('view-assignment-id');
+    if (!idInput || !idInput.value) {
+        alert('Assignment id not available.');
+        return;
+    }
+    const reason = prompt('Describe the problem with this question (optional):', '');
+    fetch(`/api/assignments/${idInput.value}/questions/${questionIndex}/report`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: reason || '' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert('Error reporting question: ' + (data.error || 'Unknown error'));
+            return;
+        }
+        alert('Thanks! Your question report has been submitted to the admin.');
+    })
+    .catch(error => {
+        console.error('Error reporting question:', error);
+        alert('An error occurred while submitting the question report.');
+    });
+}
+
+function editAssignment(assignmentId) {
+    alert('Edit functionality will be implemented. Assignment ID: ' + assignmentId);
+}
+
+function deleteAssignment(assignmentId) {
+    if (confirm('Are you sure you want to delete this assignment?')) {
+        fetch(`/api/assignments/${assignmentId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Assignment deleted successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the assignment.');
+        });
+    }
+}
+
+function applyFilters() {
+    const status = document.getElementById('status-filter').value;
+    const course = document.getElementById('course-filter').value;
+    
+    // Reload page with filters
+    let url = '/assignments?';
+    if (status) url += 'status=' + status + '&';
+    if (course) url += 'course=' + course + '&';
+    
+    window.location.href = url;
+}
+
+function attemptAssignment(assignmentId) {
+    // Find the assignment card for metadata
+    const card = document.querySelector(`.assignment-card[data-assignment-id="${assignmentId}"]`);
+    const assignmentType = card ? card.getAttribute('data-assignment-type') : '';
+
+    // If this is an AI MCQ quiz assignment, open the MCQ quiz modal instead
+    if (assignmentType === 'quiz_mcq') {
+        openExistingQuizAssignment(assignmentId, card);
+        return;
+    }
+
+    // Default: open free-text attempt modal with question/description
+    const title = card ? card.getAttribute('data-assignment-title') : '';
+    const description = card ? card.getAttribute('data-assignment-description') : '';
+    const textEl = document.getElementById('attempt-assignment-text');
+    if (textEl) {
+        let displayText = title || '';
+        if (description) {
+            displayText = displayText ? `${displayText} – ${description}` : description;
+        }
+        textEl.textContent = displayText;
+    }
+
+    document.getElementById('attempt-assignment-id').value = assignmentId;
+    document.getElementById('student-answer').value = '';
+    document.getElementById('attemptAssignmentModal').style.display = 'flex';
+}
+
+function closeAttemptAssignmentModal() {
+    document.getElementById('attemptAssignmentModal').style.display = 'none';
+}
+
+// Handle attempt assignment form submission (LLM grading)
+document.getElementById('attemptAssignmentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const assignmentId = document.getElementById('attempt-assignment-id').value;
+    const answer = document.getElementById('student-answer').value;
+
+    const submitBtn = document.querySelector('#attemptAssignmentForm .btn-primary');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Grading with AI...';
+    }
+
+    fetch(`/api/assignments/${assignmentId}/submit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ answer: answer, generate_next: true })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert('Error while grading assignment: ' + (data.error || 'Unknown error'));
+            return;
+        }
+
+        const result = data.result;
+        let message = `Marks: ${result.score}/${result.max_points}\nRating: ${result.rating.toFixed(1)}/5`;
+        if (result.feedback) {
+            message += `\n\nFeedback:\n${result.feedback}`;
+        }
+
+        alert(message);
+        closeAttemptAssignmentModal();
+        // Offer bonus game, then reload after user finishes/ skips
+        openTicTacToeBonus(function() {
+            location.reload();
+        });
+    })
+    .catch(error => {
+        console.error('Error submitting assignment:', error);
+        alert('An error occurred while submitting the assignment.');
+    })
+    .finally(() => {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit & Get Marks';
+        }
+    });
+});
+
+// Start AI MCQ quiz for selected subject
+function startQuizWithAI() {
+    const course = document.getElementById('quiz-course-select').value;
+    if (!course) {
+        alert('Please select a subject / course first.');
+        return;
+    }
+
+    const payload = { course: course };
+
+    const btn = document.getElementById('startQuizBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Generating quiz...';
+    }
+
+    fetch('/api/assignments/quiz/start', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert('Error starting MCQ quiz: ' + (data.error || 'Unknown error'));
+            return;
+        }
+
+        // Store questions in global state and reset answers/index
+        quizQuestions = data.questions || [];
+        quizAnswers = new Array(quizQuestions.length).fill(-1);
+        currentQuizIndex = 0;
+
+        // Render the first question
+        renderCurrentQuizQuestion();
+
+        document.getElementById('quiz-assignment-id').value = data.assignment_id;
+        document.getElementById('quiz-level-label').textContent = 'Level ' + data.level;
+        document.getElementById('quizAssignmentModal').style.display = 'flex';
+    })
+    .catch(error => {
+        console.error('Error starting MCQ quiz:', error);
+        alert('An error occurred while starting the quiz.');
+    })
+    .finally(() => {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '🎯 Start 10 MCQ Quiz (Auto Level)';
+        }
+    });
+}
+
+function closeQuizAssignmentModal() {
+    document.getElementById('quizAssignmentModal').style.display = 'none';
+}
+
+// Open MCQ quiz for an existing quiz assignment (from "Attempt & Get Marks" button)
+function openExistingQuizAssignment(assignmentId, card) {
+    fetch(`/api/assignments/quiz/${assignmentId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Error loading quiz assignment: ' + (data.error || 'Unknown error'));
+                return;
+            }
+
+            quizQuestions = data.questions || [];
+            quizAnswers = new Array(quizQuestions.length).fill(-1);
+            currentQuizIndex = 0;
+
+            document.getElementById('quiz-assignment-id').value = assignmentId;
+            document.getElementById('quiz-level-label').textContent = 'Level ' + (data.level || (card ? card.getAttribute('data-assignment-level') : 1));
+
+            renderCurrentQuizQuestion();
+            document.getElementById('quizAssignmentModal').style.display = 'flex';
+        })
+        .catch(error => {
+            console.error('Error opening existing quiz assignment:', error);
+            alert('An error occurred while loading the quiz assignment.');
+        });
+}
+
+// Render the current quiz question (one by one)
+function renderCurrentQuizQuestion() {
+    const container = document.getElementById('quiz-questions-container');
+    if (!container || !quizQuestions || quizQuestions.length === 0) {
+        return;
+    }
+
+    const total = quizQuestions.length;
+    const q = quizQuestions[currentQuizIndex];
+
+    container.innerHTML = '';
+
+    const qDiv = document.createElement('div');
+    qDiv.className = 'quiz-question';
+
+    const qTitle = document.createElement('p');
+    qTitle.className = 'quiz-question-text';
+    qTitle.textContent = (currentQuizIndex + 1) + ' of ' + total + '. ' + q.question;
+    qDiv.appendChild(qTitle);
+
+    const optsDiv = document.createElement('div');
+    optsDiv.className = 'quiz-options';
+    // Stack options vertically to match app theme
+    optsDiv.style.display = 'flex';
+    optsDiv.style.flexDirection = 'column';
+    optsDiv.style.gap = '8px';
+
+    q.options.forEach((opt, idx) => {
+        const label = document.createElement('label');
+        label.className = 'quiz-option';
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+        label.style.gap = '6px';
+
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 'quiz-q-current';
+        input.value = idx;
+
+        // Restore previously chosen answer if any
+        if (quizAnswers[currentQuizIndex] === idx) {
+            input.checked = true;
+        }
+
+        const span = document.createElement('span');
+        span.textContent = opt;
+
+        label.appendChild(input);
+        label.appendChild(span);
+        optsDiv.appendChild(label);
+    });
+
+    qDiv.appendChild(optsDiv);
+    container.appendChild(qDiv);
+
+    // Update primary button label based on position
+    const submitBtn = document.querySelector('#quizAssignmentForm .btn-primary');
+    if (submitBtn) {
+        submitBtn.textContent = (currentQuizIndex === total - 1) ? 'Submit Quiz' : 'Next Question';
+    }
+}
+
+// Handle quiz next / submit via button
+function handleQuizNextOrSubmit() {
+    const assignmentId = document.getElementById('quiz-assignment-id').value;
+    const questionsContainer = document.getElementById('quiz-questions-container');
+    if (!questionsContainer || !quizQuestions || quizQuestions.length === 0) {
+        return;
+    }
+
+    const selected = questionsContainer.querySelector('input[type="radio"]:checked');
+
+    // Save current answer selection
+    if (selected) {
+        quizAnswers[currentQuizIndex] = parseInt(selected.value);
+    } else {
+        quizAnswers[currentQuizIndex] = -1; // unanswered
+    }
+
+    // If there are more questions, move to next one instead of submitting
+    if (currentQuizIndex < quizQuestions.length - 1) {
+        currentQuizIndex += 1;
+        renderCurrentQuizQuestion();
+        return;
+    }
+
+    // Last question: submit all collected answers
+    const answers = quizAnswers.slice();
+
+    const submitBtn = document.querySelector('#quizAssignmentForm .btn-primary');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+    }
+
+    fetch(`/api/assignments/quiz/${assignmentId}/submit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ answers: answers })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert('Error submitting quiz: ' + (data.error || 'Unknown error'));
+            return;
+        }
+
+        const result = data.result;
+        let message = `Level ${result.level} completed!\n\n` +
+                      `Correct: ${result.correct_count}/${result.num_questions}\n` +
+                      `Marks: ${result.score}/${result.max_points}\n` +
+                      `Rating: ${result.rating.toFixed(1)}/5\n\n` +
+                      `${result.feedback}`;
+
+        alert(message);
+        closeQuizAssignmentModal();
+        // Offer bonus game after quiz completion
+        openTicTacToeBonus(function() {
+            location.reload();
+        });
+    })
+    .catch(error => {
+        console.error('Error submitting quiz:', error);
+        alert('An error occurred while submitting the quiz.');
+    })
+    .finally(() => {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Quiz';
+        }
+    });
+}
+
+// ---------------- Tic Tac Toe Bonus Game ----------------
+let tttBoardState = Array(9).fill(null); // 'X' (student) or 'O' (computer)
+let tttGameOver = false;
+let tttGamesRemaining = 0;
+let tttOnDoneCallback = null;
+
+function openTicTacToeBonus(onDone) {
+    tttGamesRemaining = 2;
+    tttOnDoneCallback = typeof onDone === 'function' ? onDone : null;
+    resetTicTacToeBoard();
+    const modal = document.getElementById('ticTacToeModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function closeTicTacToeModal() {
+    const modal = document.getElementById('ticTacToeModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function finishTicTacToeBonus() {
+    closeTicTacToeModal();
+    if (tttOnDoneCallback) {
+        tttOnDoneCallback();
+        tttOnDoneCallback = null;
+    }
+}
+
+function resetTicTacToeBoard() {
+    tttBoardState = Array(9).fill(null);
+    tttGameOver = false;
+
+    const cells = document.querySelectorAll('#ttt-board .ttt-cell');
+    cells.forEach(cell => {
+        cell.textContent = '';
+        cell.disabled = false;
+    });
+
+    const statusEl = document.getElementById('ttt-status-text');
+    if (statusEl) {
+        statusEl.textContent = 'You are X. Tap a square to start. Games left: ' + tttGamesRemaining;
+    }
+
+    const playAgainBtn = document.getElementById('ttt-play-again-btn');
+    if (playAgainBtn) {
+        playAgainBtn.disabled = tttGamesRemaining <= 0;
+        playAgainBtn.style.display = tttGamesRemaining > 0 ? 'inline-block' : 'none';
+    }
+
+    // Randomly let computer start sometimes so both can win
+    const statusEl2 = document.getElementById('ttt-status-text');
+    const computerStarts = Math.random() < 0.4; // 40% of games computer starts
+    if (computerStarts) {
+        if (statusEl2) {
+            statusEl2.textContent = 'Computer starts this round as O. Games left: ' + tttGamesRemaining;
+        }
+        tttComputerMove();
+    }
+}
+
+function tttCheckWinner(board) {
+    const lines = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ];
+    for (const [a,b,c] of lines) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+            return board[a];
+        }
+    }
+    if (board.every(v => v)) return 'draw';
+    return null;
+}
+
+function tttComputerMove() {
+    if (tttGameOver) return;
+    const cells = document.querySelectorAll('#ttt-board .ttt-cell');
+    const emptyIndexes = tttBoardState
+        .map((v, i) => v ? null : i)
+        .filter(i => i !== null);
+    if (emptyIndexes.length) {
+        const compIdx = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
+        tttBoardState[compIdx] = 'O';
+        if (cells[compIdx]) {
+            cells[compIdx].textContent = 'O';
+        }
+    }
+}
+
+function handleTicTacToeCellClick(idx) {
+    if (tttGameOver || tttBoardState[idx]) return;
+
+    // Player move
+    tttBoardState[idx] = 'X';
+    const cells = document.querySelectorAll('#ttt-board .ttt-cell');
+    if (cells[idx]) {
+        cells[idx].textContent = 'X';
+    }
+
+    let winner = tttCheckWinner(tttBoardState);
+    if (winner) {
+        tttEndGame(winner);
+        return;
+    }
+
+    // Computer move (simple random AI)
+    tttComputerMove();
+
+    winner = tttCheckWinner(tttBoardState);
+    if (winner) {
+        tttEndGame(winner);
+    }
+}
+
+function tttEndGame(winner) {
+    tttGameOver = true;
+    const statusEl = document.getElementById('ttt-status-text');
+    let message = '';
+    let resultForScore = 'loss';
+    if (winner === 'draw') {
+        message = 'It\'s a draw!';
+        resultForScore = 'draw';
+    } else if (winner === 'X') {
+        message = 'You win! Great job 🎉';
+        resultForScore = 'win';
+    } else {
+        message = 'Computer wins this round. Try again!';
+        resultForScore = 'loss';
+    }
+    if (statusEl) {
+        if (tttGamesRemaining > 0) {
+            statusEl.textContent = message + ' Games left: ' + (tttGamesRemaining - 1);
+        } else {
+            statusEl.textContent = message + ' No games left.';
+        }
+    }
+
+    const cells = document.querySelectorAll('#ttt-board .ttt-cell');
+    cells.forEach(cell => {
+        cell.disabled = true;
+    });
+
+    tttGamesRemaining = Math.max(tttGamesRemaining - 1, 0);
+
+    const playAgainBtn = document.getElementById('ttt-play-again-btn');
+    if (playAgainBtn) {
+        playAgainBtn.disabled = tttGamesRemaining <= 0;
+        playAgainBtn.style.display = tttGamesRemaining > 0 ? 'inline-block' : 'none';
+    }
+
+    // Send tic tac toe result to backend for leaderboard
+    fetch('/api/games/tictactoe/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result: resultForScore })
+    }).catch(err => console.error('Error sending tictactoe score:', err));
+}
+
+// Load courses for filter dropdown and quiz subject dropdown
+document.addEventListener('DOMContentLoaded', function() {
+    const courseFilter = document.getElementById('course-filter');
+    const quizCourseSelect = document.getElementById('quiz-course-select');
+
+    // Attach tic tac toe cell handlers
+    const tttCells = document.querySelectorAll('#ttt-board .ttt-cell');
+    tttCells.forEach(cell => {
+        const idx = parseInt(cell.getAttribute('data-idx'));
+        cell.addEventListener('click', function() {
+            handleTicTacToeCellClick(idx);
+        });
+    });
+
+    // Base list of common Indian school subjects
+    const indianSubjects = [
+        'Mathematics',
+        'Science',
+        'Physics',
+        'Chemistry',
+        'Biology',
+        'English',
+        'Hindi',
+        'Social Science',
+        'History',
+        'Geography',
+        'Civics',
+        'Economics',
+        'Computer Science',
+        'Information Technology',
+        'Accountancy',
+        'Business Studies'
+    ];
+
+    const added = new Set();
+
+    // Add static Indian subjects to both dropdowns
+    if (courseFilter) {
+        indianSubjects.forEach(sub => {
+            const value = sub;
+            if (!added.has('filter:' + value)) {
+                const opt = document.createElement('option');
+                opt.value = value;
+                opt.textContent = value;
+                courseFilter.appendChild(opt);
+                added.add('filter:' + value);
+            }
+        });
+    }
+
+    if (quizCourseSelect) {
+        indianSubjects.forEach(sub => {
+            const value = sub;
+            if (!added.has('quiz:' + value)) {
+                const opt = document.createElement('option');
+                opt.value = value;
+                opt.textContent = value;
+                quizCourseSelect.appendChild(opt);
+                added.add('quiz:' + value);
+            }
+        });
+    }
+
+    // Then merge in dynamic courses from backend (no duplicates)
+    fetch('/api/courses')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                data.courses.forEach(course => {
+                    const value = course.title;
+                    if (!value) return;
+
+                    if (courseFilter && !Array.from(courseFilter.options).some(o => o.value === value)) {
+                        const opt1 = document.createElement('option');
+                        opt1.value = value;
+                        opt1.textContent = value;
+                        courseFilter.appendChild(opt1);
+                    }
+
+                    if (quizCourseSelect && !Array.from(quizCourseSelect.options).some(o => o.value === value)) {
+                        const opt2 = document.createElement('option');
+                        opt2.value = value;
+                        opt2.textContent = value;
+                        quizCourseSelect.appendChild(opt2);
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading courses:', error);
+        });
+});
+</script>
+{% endblock %}

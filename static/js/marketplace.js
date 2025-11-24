@@ -65,7 +65,7 @@ function createCropCard(crop) {
     card.className = 'crop-card';
     
     // Get appropriate emoji based on category
-    let emoji = '🌱';
+    let emoji = '📚';
     if (crop.category === 'grains') emoji = '🌾';
     else if (crop.category === 'vegetables') emoji = '🥕';
     else if (crop.category === 'fruits') emoji = '🍎';
@@ -230,7 +230,7 @@ function createMyListingCard(crop) {
     card.className = 'my-listing-card';
     
     // Get appropriate emoji based on category
-    let emoji = '🌱';
+    let emoji = '📚';
     if (crop.category === 'grains') emoji = '🌾';
     else if (crop.category === 'vegetables') emoji = '🥕';
     else if (crop.category === 'fruits') emoji = '🍎';

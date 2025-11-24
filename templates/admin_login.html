@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login - Learning App{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <div class="form-container">
+        <h2 style="margin-bottom: 16px;">🔐 Admin Login</h2>
+        <form method="POST" action="/admin-login">
+            <div class="form-group">
+                <label for="admin-username">Username</label>
+                <input type="text" id="admin-username" name="username" placeholder="Enter admin username" required>
+            </div>
+            <div class="form-group">
+                <label for="admin-password">Password</label>
+                <input type="password" id="admin-password" name="password" placeholder="Enter admin password" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Login</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+

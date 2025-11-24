@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-� STUDENT LEARNING PLATFORM - Education Management System �
+🎓 LEARNING APP - Student Learning Platform 🎓
 
-Main entry point for the Student Learning Platform.
+Main entry point for the Learning App.
 This script starts the Flask application with proper logging and error handling.
 
 Usage:
@@ -35,20 +35,30 @@ except ImportError as e:
     sys.exit(1)
 
 if __name__ == '__main__':
-    # Load environment variables
+    # Load environment variables from both .env and env.yaml
     load_dotenv()
+    
+    # Also load from YAML file
+    try:
+        from utils import load_env_from_yaml
+        load_env_from_yaml()
+        log_info("Loaded environment variables from env.yaml")
+    except Exception as e:
+        log_warning(f"Could not load env.yaml: {e}")
 
     # Show startup banner
     log_startup()
 
-    # Check if .env file exists
+    # Check if environment files exist
     env_file = current_dir / '.env'
-    if not env_file.exists():
-        log_error(".env file not found! Please create a .env file with required variables.")
+    yaml_file = current_dir / 'env.yaml'
+    
+    if not env_file.exists() and not yaml_file.exists():
+        log_error("No environment file found! Please create either .env or env.yaml with required variables.")
         log_info("Required variables: MONGO_URI, SECRET_KEY")
         sys.exit(1)
 
-    log_success("Environment file found")
+    log_success("Environment file(s) found")
 
     # Check required environment variables
     SECRET_KEY = os.getenv('SECRET_KEY')
@@ -64,7 +74,7 @@ if __name__ == '__main__':
     # Test MongoDB connection
     try:
         client = MongoClient(MONGO_URI)
-        db_name = os.getenv('DB_NAME', 'student_learning')
+        db_name = os.getenv('DB_NAME', 'learning')
         db = client[db_name]
         # Test the connection
         client.admin.command('ping')
@@ -87,11 +97,11 @@ if __name__ == '__main__':
     host = os.getenv('FLASK_HOST', '0.0.0.0')
     port = int(os.getenv('FLASK_PORT', 5000))
 
-    log_info(f"Starting Student Learning Platform server on {host}:{port}")
+    log_info(f"Starting Learning App server on {host}:{port}")
     log_info(f"Debug mode: {'ON' if debug_mode else 'OFF'}")
-    log_success("� Student Learning Platform is ready! Press Ctrl+C to stop.")
+    log_success("🎓 Learning App is ready! Press Ctrl+C to stop.")
     print(f"\n{'='*60}")
-    print(f"🌐 ACCESS YOUR STUDENT LEARNING PLATFORM:")
+    print(f"🌐 ACCESS YOUR LEARNING APP:")
     print(f"   Local:   http://localhost:{port}")
     print(f"   Network: http://127.0.0.1:{port}")
     print(f"   External: http://192.168.1.7:{port}")
@@ -118,8 +128,8 @@ if __name__ == '__main__':
     try:
         app.run(debug=debug_mode, host=host, port=port)
     except KeyboardInterrupt:
-        log_info("Shutting down Student Learning Platform...")
-        log_success("👋 Student Learning Platform stopped successfully!")
+        log_info("Shutting down Learning App...")
+        log_success("👋 Learning App stopped successfully!")
     except Exception as e:
-        log_error(f"Student Learning Platform crashed: {e}")
+        log_error(f"Learning App crashed: {e}")
         sys.exit(1)

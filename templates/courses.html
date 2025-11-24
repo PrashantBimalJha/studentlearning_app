@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}My Courses - Learning App{% endblock %}
+
+{% block content %}
+<div class="courses-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>📚 My Courses</h1>
+            <p>Manage your courses and create new learning content</p>
+        </div>
+    </div>
+
+    <!-- Add Course Button -->
+    <div class="add-course-section">
+        <button class="add-course-btn" onclick="showAddCourseModal()">
+            <span class="btn-icon">➕</span>
+            <span class="btn-text">Add New Course</span>
+        </button>
+        <button class="add-course-btn" style="margin-left: 12px; background: linear-gradient(45deg, #4CAF50, #16a34a);" onclick="showAiCourseModal()">
+            <span class="btn-icon">🤖</span>
+            <span class="btn-text">Generate Course with AI</span>
+        </button>
+    </div>
+
+    <!-- Courses Grid -->
+    <div class="courses-grid">
+        {% if user_courses %}
+            {% for course in user_courses %}
+            <div class="course-card">
+                <div class="course-header">
+                    <div class="course-icon">📚</div>
+                    <div class="course-status {{ course.status or 'active' }}">{{ course.status or 'Active' }}</div>
+                </div>
+                <div class="course-content">
+                    <h3 class="course-title">{{ course.title }}</h3>
+                    <p class="course-description">{{ course.description or 'No description available' }}</p>
+                    <p class="course-description" style="margin-top:4px; font-size:0.9rem; color:#6b7280;">
+                        👩‍🏫 This course is designed to be taught by a real tutor. Use AI only for quick doubts – your main learning, homework and feedback come from your human teacher.
+                    </p>
+                    <div class="course-meta">
+                        <span class="course-level">{{ course.level or 'Beginner' }}</span>
+                        <span class="course-category">{{ course.category or 'General' }}</span>
+                        <span class="course-duration">{{ course.duration or 'Self-paced' }}</span>
+                    </div>
+                    <div class="course-stats">
+                        <div class="stat">
+                            <span class="stat-number">{{ course.enrolled_students or 0 }}</span>
+                            <span class="stat-label">Students</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">{{ course.rating or 0 }}</span>
+                            <span class="stat-label">Rating</span>
+                        </div>
+                        {% set prog = course_progress.get(course.title) if course_progress is defined else None %}
+                        {% if prog %}
+                        <div class="stat">
+                            <span class="stat-number">{{ prog.avg_score }}/{{ course.points or 10 }}</span>
+                            <span class="stat-label">Avg Marks</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if prog %}
+                    <div class="course-progress-bar">
+                        <div class="course-progress-track">
+                            <div class="course-progress-fill" style="width: {{ prog.progress_percent }}%;"></div>
+                        </div>
+                        <div class="course-progress-text">
+                            {{ prog.completed }}/{{ prog.total }} quizzes completed ({{ prog.progress_percent }}%)
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="course-actions" style="display:flex; flex-direction:column; gap:8px;">
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-edit" style="flex:1;" onclick="editCourse('{{ course._id }}')">✏️ Edit</button>
+                        <button class="btn-delete" style="flex:1;" onclick="deleteCourse('{{ course._id }}')">🗑️ Delete</button>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-primary" style="flex:1;" onclick="startCourseMcqPractice('{{ course.title }}')">🎯 MCQ Practice</button>
+                        <button class="btn-secondary" style="flex:1;" onclick="goToAiTutor('{{ course.title }}')">🤖 Ask Tutor</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-courses">
+                <div class="no-courses-icon">📚</div>
+                <h3>No Courses Yet</h3>
+                <p>Start by creating your first course!</p>
+                <button class="btn-primary" onclick="showAddCourseModal()">Create Course</button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Course Modal -->
+<div id="addCourseModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>📚 Add New Course</h2>
+            <span class="close" onclick="closeAddCourseModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="addCourseForm">
+                <div class="form-group">
+                    <label for="course-title">Course Title</label>
+                    <input type="text" id="course-title" placeholder="Enter course title" required>
+                </div>
+                <div class="form-group">
+                    <label for="course-description">Description</label>
+                    <textarea id="course-description" placeholder="Enter course description" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="course-category">Subject</label>
+                        <select id="course-category" required>
+                            <option value="">Select Subject</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Science">Science</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Biology">Biology</option>
+                            <option value="English">English</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Social Science">Social Science</option>
+                            <option value="History">History</option>
+                            <option value="Geography">Geography</option>
+                            <option value="Civics">Civics</option>
+                            <option value="Economics">Economics</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="Accountancy">Accountancy</option>
+                            <option value="Business Studies">Business Studies</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="course-level">Level</label>
+                        <select id="course-level" required>
+                            <option value="">Select Level</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="course-duration">Duration</label>
+                    <input type="text" id="course-duration" placeholder="e.g., 4 weeks, 2 months, Self-paced">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAddCourseModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- AI Generate Course Modal -->
+<div id="aiCourseModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🤖 Generate Course with AI</h2>
+            <span class="close" onclick="closeAiCourseModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="aiCourseForm">
+                <div class="form-group">
+                    <label for="ai-course-subject">Subject</label>
+                    <select id="ai-course-subject" required>
+                        <option value="">Select Subject</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Science">Science</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Biology">Biology</option>
+                        <option value="English">English</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Social Science">Social Science</option>
+                        <option value="History">History</option>
+                        <option value="Geography">Geography</option>
+                        <option value="Civics">Civics</option>
+                        <option value="Economics">Economics</option>
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Accountancy">Accountancy</option>
+                        <option value="Business Studies">Business Studies</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ai-course-level">Level</label>
+                    <select id="ai-course-level">
+                        <option value="">Auto</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAiCourseModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Generate &amp; Create Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Course management functions
+function showAddCourseModal() {
+    document.getElementById('addCourseModal').style.display = 'flex';
+}
+
+function closeAddCourseModal() {
+    document.getElementById('addCourseModal').style.display = 'none';
+    document.getElementById('addCourseForm').reset();
+}
+
+function showAiCourseModal() {
+    document.getElementById('aiCourseModal').style.display = 'flex';
+}
+
+function closeAiCourseModal() {
+    document.getElementById('aiCourseModal').style.display = 'none';
+    document.getElementById('aiCourseForm').reset();
+}
+
+function editCourse(courseId) {
+    // For now, just show an alert. In a real app, you'd open an edit modal
+    alert('Edit functionality will be implemented. Course ID: ' + courseId);
+}
+
+function deleteCourse(courseId) {
+    if (confirm('Are you sure you want to delete this course?')) {
+        fetch(`/api/courses/${courseId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Course deleted successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the course.');
+        });
+    }
+}
+
+function startCourseMcqPractice(courseTitle) {
+    // Redirect to assignments page filtered by this course; MCQ Practice will use the subject
+    const params = new URLSearchParams();
+    params.set('course', courseTitle);
+    window.location.href = '/assignments?' + params.toString();
+}
+
+function goToAiTutor(courseTitle) {
+    // For now just navigate to chat page; could later pass courseTitle as context
+    window.location.href = '/chat';
+}
+
+// Handle add course form submission
+document.getElementById('addCourseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const courseData = {
+        title: document.getElementById('course-title').value,
+        description: document.getElementById('course-description').value,
+        category: document.getElementById('course-category').value,
+        level: document.getElementById('course-level').value,
+        duration: document.getElementById('course-duration').value
+    };
+    
+    fetch('/api/courses', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(courseData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Course created successfully!');
+            closeAddCourseModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while creating the course.');
+    });
+});
+
+// Handle AI generate course form submission
+document.getElementById('aiCourseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const subject = document.getElementById('ai-course-subject').value;
+    const level = document.getElementById('ai-course-level').value;
+
+    if (!subject) {
+        alert('Please select a subject.');
+        return;
+    }
+
+    fetch('/api/courses/generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ subject: subject, level: level })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('AI-generated course created successfully!');
+            closeAiCourseModal();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to generate course'));
+        }
+    })
+    .catch(error => {
+        console.error('Error generating course:', error);
+        alert('An error occurred while generating the course.');
+    });
+});
+</script>
+{% endblock %}

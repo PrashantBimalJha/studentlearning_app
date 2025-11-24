@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Learning App{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <div class="learning-feed">
+        <div class="page-header">
+            <div class="header-content">
+                <h1>👨‍💼 Admin Dashboard</h1>
+                <p>Manage students, assignments, and reports</p>
+            </div>
+            <div>
+                <a href="/admin/logout" class="btn-secondary">Logout</a>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div class="recent-activity">
+            <h3>⚠️ Reports</h3>
+            {% if reports %}
+            <div class="activity-list">
+                {% for r in reports %}
+                <div class="activity-item">
+                    <div class="activity-icon">⚠️</div>
+                    <div class="activity-content">
+                        <div class="activity-title">
+                            {{ r.type|title }} issue on assignment {{ r.assignment_id }}{% if r.type == 'question' %} (Q{{ (r.question_index or 0) + 1 }}){% endif %}
+                        </div>
+                        <div class="activity-meta">
+                            {{ r.student_name or 'Unknown student' }} ({{ r.student_email or 'no email' }}) • {{ r.course or 'No subject' }}
+                        </div>
+                        <div class="activity-meta">
+                            Reason: {{ r.reason }}
+                        </div>
+                    </div>
+                    <div class="activity-side" style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; min-width:260px;">
+                        <div class="activity-status" style="font-weight:600;">{{ r.status|title }}</div>
+                        <div class="activity-actions">
+                            <form method="POST" action="/admin/reports/{{ r._id }}/resolve" style="display:inline;">
+                                {% if r.type == 'assignment' %}
+                                <input type="number" step="0.1" name="score" placeholder="New score" style="width:80px; margin-right:4px;">
+                                <input type="number" step="0.1" name="rating" placeholder="New rating" style="width:80px; margin-right:4px;">
+                                {% endif %}
+                                <button type="submit" class="btn-secondary">Mark Fixed / Give Marks</button>
+                            </form>
+                            <a href="/admin/assignments/{{ r.assignment_id }}/review" class="btn-secondary" style="margin-left: 6px; display:inline-block; margin-top:4px;">
+                                Review Assignment
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>No reports yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Students Section -->
+        <div class="recent-activity">
+            <h3>👨‍🎓 Students</h3>
+            {% if users %}
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Username</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.username }}</td>
+                        <td>
+                            <form method="POST" action="/admin/users/{{ u._id }}/delete" style="display:inline;">
+                                <button type="submit" class="btn-delete" onclick="return confirm('Delete this user?');">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No students found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Assignments Section -->
+        <div class="recent-activity">
+            <h3>📝 Assignments</h3>
+            {% if assignments %}
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Course</th>
+                        <th>Student</th>
+                        <th>Score / Points</th>
+                        <th>Rating</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in assignments %}
+                    <tr>
+                        <td>{{ a.title }}</td>
+                        <td>{{ a.course }}</td>
+                        <td>{{ a.student_email }}</td>
+                        <td>{{ a.score if a.score is not none else '-' }} / {{ a.points }}</td>
+                        <td>{{ '%.1f'|format(a.rating) if a.rating is not none else '-' }}</td>
+                        <td>
+                            <form method="POST" action="/admin/assignments/{{ a._id }}/delete" style="display:inline;">
+                                <button type="submit" class="btn-delete" onclick="return confirm('Delete this assignment?');">Delete</button>
+                            </form>
+                            <form method="POST" action="/admin/assignments/{{ a._id }}/update-marks" style="display:inline; margin-left: 6px;">
+                                <input type="number" step="0.1" name="score" placeholder="Score" style="width:70px;">
+                                <input type="number" step="0.1" name="rating" placeholder="Rating" style="width:70px;">
+                                <button type="submit" class="btn-secondary">Update</button>
+                            </form>
+                            <a href="/admin/assignments/{{ a._id }}/review" class="btn-secondary" style="margin-left: 6px;">Review Questions</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No assignments found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

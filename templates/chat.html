@@ -1,0 +1,622 @@
+{% extends "base.html" %}
+
+{% block title %}AI Chat Support - Learning App{% endblock %}
+
+{% block content %}
+<div class="chat-page">
+    <div class="chat-container">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="chat-title">
+                <h1>🤖 AI Tuition Teacher</h1>
+                <p>Get instant help with your studies from our AI-powered tutor</p>
+            </div>
+            <div class="chat-actions">
+                <button id="clearChatBtn" class="btn-secondary" title="Clear conversation">
+                    🗑️ Clear Chat
+                </button>
+                <button id="statusBtn" class="btn-secondary" title="Check AI status">
+                    📊 Status
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <div class="welcome-content">
+                    <div class="welcome-icon">🎓</div>
+                    <h3>Welcome to AI Chat Support!</h3>
+                    <p>I'm your AI tuition teacher, ready to help you with any academic questions. Ask me about:</p>
+                    <ul>
+                        <li>📚 Mathematics and Science problems</li>
+                        <li>📝 English and Literature questions</li>
+                        <li>🌍 History and Social Studies</li>
+                        <li>💻 Computer Science and Programming</li>
+                        <li>📖 Study techniques and exam preparation</li>
+                        <li>🎓 Doubts from your enrolled courses and human tutor classes</li>
+                    </ul>
+                    <p>Just type your question below and I'll help you understand it step by step. For class timings, homework checks or marks updates, your human tutor will guide you on the Courses &amp; Assignments pages.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <textarea 
+                    id="chatInput" 
+                    placeholder="Ask me about courses, assignments, doubts..."
+                    rows="2"
+                    maxlength="1000"
+                ></textarea>
+                <button id="sendBtn" class="send-btn" disabled>
+                    <span class="send-icon">➤</span>
+                </button>
+            </div>
+            <div class="input-footer">
+                <span class="char-count" id="charCount">0/1000</span>
+                <span class="ai-status" id="aiStatus">🟢 AI Ready</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <p>AI Teacher is thinking...</p>
+    </div>
+</div>
+
+<!-- Status Modal -->
+<div id="statusModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🤖 AI System Status</h2>
+            <span class="close" onclick="closeStatusModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="statusContent">
+                <div class="loading">Loading status...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Chat Page Styles */
+.chat-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 100px 20px 20px;
+}
+
+.chat-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+    overflow: hidden;
+    height: calc(100vh - 140px);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    background: var(--gradient-primary);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.chat-title h1 {
+    margin: 0 0 5px 0;
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.chat-title p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.chat-actions .btn-secondary {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.chat-actions .btn-secondary:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-1px);
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #f8fafc;
+}
+
+.welcome-message {
+    text-align: center;
+    padding: 40px 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.welcome-content .welcome-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.welcome-content h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+.welcome-content p {
+    color: var(--text-light);
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.welcome-content ul {
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto 20px;
+    color: var(--text-light);
+}
+
+.welcome-content li {
+    margin-bottom: 8px;
+    padding-left: 10px;
+}
+
+.message {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.message.user {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.message.user .message-avatar {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.message.ai .message-avatar {
+    background: var(--gradient-secondary);
+    color: white;
+}
+
+.message-content {
+    max-width: 70%;
+    padding: 15px 20px;
+    border-radius: 18px;
+    position: relative;
+    word-wrap: break-word;
+}
+
+.message.user .message-content {
+    background: var(--gradient-primary);
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+
+.message.ai .message-content {
+    background: white;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-bottom-left-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.message-time {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 5px;
+}
+
+.chat-input-container {
+    padding: 20px 30px;
+    background: white;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.chat-input-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+#chatInput {
+    flex: 1;
+    border: 2px solid #6366f1;
+    border-radius: 999px;
+    padding: 12px 18px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: none;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25);
+}
+
+#chatInput:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+}
+
+.send-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    box-shadow: 0 12px 30px rgba(16, 185, 129, 0.45);
+}
+
+.send-btn:hover:not(:disabled) {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 14px 32px rgba(16, 185, 129, 0.6);
+}
+
+.send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.input-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.char-count {
+    font-weight: 500;
+}
+
+.ai-status {
+    font-weight: 600;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.loading-content {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .chat-page {
+        padding: 80px 10px 10px;
+    }
+    
+    .chat-container {
+        height: calc(100vh - 100px);
+        border-radius: 15px;
+    }
+    
+    .chat-header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .chat-actions {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .message-content {
+        max-width: 85%;
+    }
+    
+    .chat-input-container {
+        padding: 15px 20px;
+    }
+    
+    .chat-input-wrapper {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .send-btn {
+        width: 52px;
+        height: 52px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatMessages = document.getElementById('chatMessages');
+    const charCount = document.getElementById('charCount');
+    const aiStatus = document.getElementById('aiStatus');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const clearChatBtn = document.getElementById('clearChatBtn');
+    const statusBtn = document.getElementById('statusBtn');
+    const statusModal = document.getElementById('statusModal');
+
+    // Auto-resize textarea
+    chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        
+        // Update character count
+        const count = this.value.length;
+        charCount.textContent = `${count}/1000`;
+        
+        // Enable/disable send button
+        sendBtn.disabled = count === 0 || count > 1000;
+    });
+
+    // Send message on Enter (but not Shift+Enter)
+    chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (!sendBtn.disabled) {
+                sendMessage();
+            }
+        }
+    });
+
+    // Send button click
+    sendBtn.addEventListener('click', sendMessage);
+
+    // Clear chat button
+    clearChatBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear the chat history?')) {
+            clearChat();
+        }
+    });
+
+    // Status button
+    statusBtn.addEventListener('click', function() {
+        showStatusModal();
+    });
+
+    function sendMessage() {
+        const question = chatInput.value.trim();
+        if (!question) return;
+
+        // Add user message to chat
+        addMessage('user', question);
+        
+        // Clear input
+        chatInput.value = '';
+        chatInput.style.height = 'auto';
+        charCount.textContent = '0/1000';
+        sendBtn.disabled = true;
+
+        // Show loading
+        showLoading();
+
+        // Send to API
+        fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ question: question })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            
+            if (data.success) {
+                addMessage('ai', data.response);
+                updateAIStatus('🟢 AI Ready');
+            } else {
+                addMessage('ai', `Sorry, I encountered an error: ${data.error || 'Unknown error'}`);
+                updateAIStatus('🔴 AI Error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            addMessage('ai', 'Sorry, I\'m having trouble connecting right now. Please try again later.');
+            updateAIStatus('🔴 Connection Error');
+            console.error('Error:', error);
+        });
+    }
+
+    function addMessage(sender, content) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        
+        const avatar = sender === 'user' ? '👤' : '🤖';
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        messageDiv.innerHTML = `
+            <div class="message-avatar">${avatar}</div>
+            <div class="message-content">
+                <div class="message-text">${formatMessage(content)}</div>
+                <div class="message-time">${time}</div>
+            </div>
+        `;
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function formatMessage(content) {
+        // Basic markdown-like formatting
+        return content
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>')
+            .replace(/`(.*?)`/g, '<code>$1</code>');
+    }
+
+    function showLoading() {
+        loadingOverlay.style.display = 'flex';
+        updateAIStatus('🟡 AI Thinking...');
+    }
+
+    function hideLoading() {
+        loadingOverlay.style.display = 'none';
+    }
+
+    function updateAIStatus(status) {
+        aiStatus.textContent = status;
+    }
+
+    function clearChat() {
+        fetch('/api/chat/clear', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove all messages except welcome message
+                const messages = chatMessages.querySelectorAll('.message');
+                messages.forEach(msg => msg.remove());
+                updateAIStatus('🟢 AI Ready');
+            } else {
+                alert('Failed to clear chat history');
+            }
+        })
+        .catch(error => {
+            console.error('Error clearing chat:', error);
+            alert('Failed to clear chat history');
+        });
+    }
+
+    function showStatusModal() {
+        statusModal.style.display = 'block';
+        
+        fetch('/api/chat/status')
+        .then(response => response.json())
+        .then(data => {
+            const statusContent = document.getElementById('statusContent');
+            statusContent.innerHTML = `
+                <div class="status-item">
+                    <strong>Ollama Connection:</strong> 
+                    <span class="${data.ollama_connected ? 'status-success' : 'status-error'}">
+                        ${data.ollama_connected ? '🟢 Connected' : '🔴 Disconnected'}
+                    </span>
+                </div>
+                <div class="status-item">
+                    <strong>Current Model:</strong> ${data.current_model || 'Unknown'}
+                </div>
+                <div class="status-item">
+                    <strong>Available Models:</strong> ${data.available_models ? data.available_models.join(', ') : 'None'}
+                </div>
+                <div class="status-item">
+                    <strong>Active Conversations:</strong> ${data.active_conversations || 0}
+                </div>
+                <div class="status-item">
+                    <strong>Total Messages:</strong> ${data.total_messages || 0}
+                </div>
+            `;
+        })
+        .catch(error => {
+            document.getElementById('statusContent').innerHTML = 
+                '<div class="status-error">Failed to load status</div>';
+        });
+    }
+
+    function closeStatusModal() {
+        statusModal.style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === statusModal) {
+            closeStatusModal();
+        }
+    });
+
+    // Focus input on load
+    chatInput.focus();
+});
+</script>
+{% endblock %}

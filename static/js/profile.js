@@ -20,8 +20,8 @@ window.toggleProfileDropdown = toggleProfileDropdown;
 
 // Update profile display with current data
 function updateProfileDisplay() {
-    const userName = sessionStorage.getItem('userName') || 'Student';
-    const userEmail = sessionStorage.getItem('userEmail') || 'student@example.com';
+    const userName = sessionStorage.getItem('userName') || 'Farmer';
+    const userEmail = sessionStorage.getItem('userEmail') || 'farmer@example.com';
     
     // Update profile initials
     const profileInitial = document.getElementById('profile-initial');
@@ -183,7 +183,7 @@ function loadProfileData() {
         email: sessionStorage.getItem('userEmail') || 'user@example.com',
         phone: sessionStorage.getItem('userPhone') || '+91 9876543210',
         location: sessionStorage.getItem('userLocation') || 'India',
-        bio: sessionStorage.getItem('userBio') || 'Farming enthusiast'
+        bio: sessionStorage.getItem('userBio') || 'Learning enthusiast'
     };
     
     document.getElementById('profile-name').value = profileData.name;

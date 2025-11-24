@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Learning Dashboard - Learning App{% endblock %}
+
+{% block head_extra %}
+<script>
+// Pass user data to the base template
+console.log('Setting user data in sessionStorage...');
+console.log('User email:', '{{ user_email or "user@example.com" }}');
+console.log('User name:', '{{ user_name or "User" }}');
+
+// Store user data in sessionStorage for the base template
+sessionStorage.setItem('userEmail', '{{ user_email or "user@example.com" }}');
+sessionStorage.setItem('userPhone', '{{ user_phone or "" }}');
+sessionStorage.setItem('userName', '{{ user_name or "User" }}');
+sessionStorage.setItem('userLocation', '{{ user_location or "" }}');
+sessionStorage.setItem('userBio', '{{ user_bio or "" }}');
+
+console.log('User data stored:', {
+    email: sessionStorage.getItem('userEmail'),
+    name: sessionStorage.getItem('userName'),
+    phone: sessionStorage.getItem('userPhone')
+});
+
+// Force navigation update after setting user data
+setTimeout(() => {
+    console.log('Forcing navigation update after user data is set...');
+    if (typeof updateNavigation === 'function') {
+        console.log('Calling updateNavigation...');
+        updateNavigation();
+    } else {
+        console.log('updateNavigation function not available yet, trying again...');
+        setTimeout(() => {
+            if (typeof updateNavigation === 'function') {
+                updateNavigation();
+            }
+        }, 200);
+    }
+}, 50);
+
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <!-- Search Bar -->
+    <div class="search-container">
+        <div class="search-wrapper">
+            <input type="text" placeholder="Search courses, assignments..." class="search-input">
+        </div>
+    </div>
+
+
+    <!-- Learning Dashboard Feed -->
+    <div class="learning-feed">
+        <!-- Quick Stats Section -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-icon">📚</div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ user_courses|length }}</div>
+                    <div class="stat-label">My Courses</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ user_assignments|length }}</div>
+                    <div class="stat-label">Assignments</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ average_rating or 0.0 }}</div>
+                    <div class="stat-label">Avg Rating (from assignments)</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ progress_percent or 0 }}%</div>
+                    <div class="stat-label">Progress</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <div class="welcome-card">
+                <h2>🎓 Welcome to Your Learning Dashboard</h2>
+                <p>Choose an action below to continue your learning journey:</p>
+                <div class="welcome-features">
+                    <div class="feature-item">
+                        <span class="feature-icon">📝</span>
+                        <h3>Assignments</h3>
+                        <p>View and manage your assignments and deadlines</p>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">📚</span>
+                        <h3>My Courses</h3>
+                        <p>Access your enrolled courses and materials</p>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">🎓</span>
+                        <h3>Learn</h3>
+                        <p>Discover new courses and learning materials</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Leaderboards -->
+        <div class="recent-activity">
+            <h3>🏆 Game Leaderboards (Global)</h3>
+            <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 10px;">
+                Scoring: Tic Tac Toe = win 3 / draw 1 / loss 0, Crossword = total correct words, Word Search = total words found.
+            </p>
+            <div class="leaderboard-grid">
+                <div class="leaderboard-card">
+                    <h4>🎮 Tic Tac Toe</h4>
+                    <ul class="leaderboard-list">
+                        {% if tictactoe_leaderboard %}
+                            {% for row in tictactoe_leaderboard %}
+                            <li>
+                                <span class="lb-rank">#{{ loop.index }}</span>
+                                <span class="lb-name">{{ row.name }}</span>
+                                <span class="lb-score">{{ row.total_score|round(1) }}</span>
+                            </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="lb-empty">No Tic Tac Toe games yet.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="leaderboard-card">
+                    <h4>✏️ Crossword</h4>
+                    <ul class="leaderboard-list">
+                        {% if crossword_leaderboard %}
+                            {% for row in crossword_leaderboard %}
+                            <li>
+                                <span class="lb-rank">#{{ loop.index }}</span>
+                                <span class="lb-name">{{ row.name }}</span>
+                                <span class="lb-score">{{ row.total_score|round(1) }}</span>
+                            </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="lb-empty">No crossword games yet.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="leaderboard-card">
+                    <h4>🔎 Word Search</h4>
+                    <ul class="leaderboard-list">
+                        {% if wordsearch_leaderboard %}
+                            {% for row in wordsearch_leaderboard %}
+                            <li>
+                                <span class="lb-rank">#{{ loop.index }}</span>
+                                <span class="lb-name">{{ row.name }}</span>
+                                <span class="lb-score">{{ row.total_score|round(1) }}</span>
+                            </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="lb-empty">No word search games yet.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="recent-activity">
+            <h3>Recent Activity</h3>
+            <div class="activity-list">
+                {% if user_assignments %}
+                    {% for assignment in user_assignments[:3] %}
+                    <div class="activity-item">
+                        <div class="activity-icon">📝</div>
+                        <div class="activity-content">
+                            <div class="activity-title">{{ assignment.title }}</div>
+                            <div class="activity-meta">{{ assignment.course }} • Due: {{ assignment.due_date }}</div>
+                        </div>
+                        <div class="activity-status {{ assignment.status }}">{{ assignment.status|title }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-activity">
+                        <p>No recent activity. Start by enrolling in a course!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.leaderboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.leaderboard-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.leaderboard-card h4 {
+    margin: 0 0 8px 0;
+}
+
+.leaderboard-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.leaderboard-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.lb-rank {
+    font-weight: 600;
+    width: 28px;
+}
+
+.lb-name {
+    flex: 1;
+    margin: 0 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lb-score {
+    font-weight: 600;
+}
+
+.lb-empty {
+    color: #6b7280;
+    font-style: italic;
+}
+</style>
+
+<script>
+// Initialize user data from backend
+document.addEventListener('DOMContentLoaded', function() {
+    // Store user data in sessionStorage
+    sessionStorage.setItem('userEmail', '{{ user_email or "user@example.com" }}');
+    sessionStorage.setItem('userPhone', '{{ user_phone or "" }}');
+    sessionStorage.setItem('userName', '{{ user_name or "User" }}');
+    sessionStorage.setItem('userLocation', '{{ user_location or "" }}');
+    sessionStorage.setItem('userBio', '{{ user_bio or "" }}');
+    
+    // Initialize profile display
+    if (typeof updateProfileInitials === 'function') {
+        updateProfileInitials('{{ user_name or "User" }}');
+    }
+});
+</script>
+{% endblock %}
+
+{% block modals %}
+<!-- Modals are defined in base.html to avoid duplicate IDs -->
+{% endblock %}

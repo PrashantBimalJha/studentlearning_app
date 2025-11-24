@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Buy Crops - Farming App{% endblock %}
+{% block title %}Buy Crops - Learning App{% endblock %}
 
 {% block head_extra %}
 <script>
@@ -65,7 +65,7 @@ setTimeout(() => {
                 <span class="btn-text">Market Updates</span>
             </a>
             <a href="/sell" class="action-btn sell-btn">
-                <span class="btn-icon">🌾</span>
+                <span class="btn-icon">📚</span>
                 <span class="btn-text">Sell Crops</span>
             </a>
             <a href="/buy" class="action-btn buy-btn active">
@@ -131,7 +131,7 @@ setTimeout(() => {
                             {% elif crop.category == 'vegetables' %}🥕
                             {% elif crop.category == 'fruits' %}🍎
                             {% elif crop.category == 'spices' %}🌶️
-                            {% else %}🌱
+                            {% else %}📚
                             {% endif %}
                         </span>
                     </div>
@@ -169,7 +169,7 @@ setTimeout(() => {
                 {% endfor %}
             {% else %}
                 <div class="no-crops">
-                    <div class="no-crops-icon">🌱</div>
+                    <div class="no-crops-icon">📚</div>
                     <h3>No crops available</h3>
                     <p>Check back later for new crop listings!</p>
                 </div>

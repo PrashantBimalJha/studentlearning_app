@@ -80,7 +80,7 @@ const sampleCrops = [
         pricePerKg: 25,
         totalPrice: 12500,
         location: 'Punjab, India',
-        description: 'High quality wheat, freshly harvested. Organic farming methods used.',
+        description: 'High quality wheat, freshly harvested. Organic learning methods used.',
         contact: '+91 98765 43210',
         harvestDate: '2024-01-15',
         seller: 'Farmer Singh'
@@ -479,7 +479,7 @@ function loadProfileData() {
         email: sessionStorage.getItem('userEmail') || 'user@example.com',
         phone: sessionStorage.getItem('userPhone') || '+91 9876543210',
         location: sessionStorage.getItem('userLocation') || 'India',
-        bio: sessionStorage.getItem('userBio') || 'Farming enthusiast'
+        bio: sessionStorage.getItem('userBio') || 'Learning enthusiast'
     };
     
     document.getElementById('profile-name').value = profileData.name;
@@ -1060,8 +1060,8 @@ document.addEventListener('DOMContentLoaded', function() {
             'onions': '🧅',
             'spinach': '🥬',
             'cabbage': '🥬',
-            'other': '🌱'
+            'other': '📚'
         };
-        return emojiMap[type] || '🌱';
+        return emojiMap[type] || '📚';
     }
 });

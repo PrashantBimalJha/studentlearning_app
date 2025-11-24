@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Sell Crops - Farming App{% endblock %}
+{% block title %}Sell Crops - Learning App{% endblock %}
 
 {% block head_extra %}
 <script>
@@ -45,7 +45,7 @@ setTimeout(() => {
     <!-- Page Header -->
     <div class="page-header">
         <div class="header-content">
-            <h1>🌾 Sell Your Crops</h1>
+            <h1>📚 Manage Your Courses</h1>
             <p>List your harvest and connect with buyers</p>
         </div>
     </div>
@@ -65,7 +65,7 @@ setTimeout(() => {
                 <span class="btn-text">Market Updates</span>
             </a>
             <a href="/sell" class="action-btn sell-btn active">
-                <span class="btn-icon">🌾</span>
+                <span class="btn-icon">📚</span>
                 <span class="btn-text">Sell Crops</span>
             </a>
             <a href="/buy" class="action-btn buy-btn">
@@ -81,7 +81,7 @@ setTimeout(() => {
             <div class="card-header">
                 <div class="user-info">
                     <div class="user-avatar">
-                        <span>🌾</span>
+                        <span>📚</span>
                     </div>
                     <div class="user-details">
                         <h3>List Your Crop</h3>
@@ -169,7 +169,7 @@ setTimeout(() => {
                 {% endfor %}
             {% else %}
                 <div class="no-listings">
-                    <div class="no-listings-icon">🌱</div>
+                    <div class="no-listings-icon">📚</div>
                     <h3>No listings yet</h3>
                     <p>Create your first crop listing using the form above!</p>
                 </div>
