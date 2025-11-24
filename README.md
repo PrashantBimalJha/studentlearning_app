@@ -269,6 +269,13 @@ can see who is leading in each game type.
 - `POST /api/games/wordsearch/score` - Record word search score (words found + time)
 - `POST /api/games/tictactoe/score` - Record Tic Tac Toe game result (win/draw/loss)
 
+## Contributors
+
+- **Rohit Raj** – rohitraj16092004@gmail.com
+- **Prashant Jha** – prashantb3005@gmail.com
+- **Siri Dayanand** – siridayanand224@gmail.com
+- **Saurabh Chandra** – saurabhchandra9170@gmail.com
+
 ## Contributing
 
 1. Fork the repository
